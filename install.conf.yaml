@@ -3,3 +3,9 @@
 - link:
 
 
+- clean: ['~']
+
+- link:
+    ~/.gitconfig: gitconfig
+
+
