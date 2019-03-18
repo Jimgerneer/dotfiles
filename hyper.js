@@ -7,7 +7,7 @@ module.exports = {
     fontFamily: 'Menlo, "DejaVu Sans Mono", "Lucida Console", monospace',
 
     // terminal cursor background color (hex)
-    cursorColor: '#FFF000',
+    cursorColor: '#F81CE5',
 
     // color of the text
     foregroundColor: '#fff',
@@ -56,7 +56,7 @@ module.exports = {
   //   `hyperpower`
   //   `@company/project`
   //   `project#1.0.1`
-  plugins: [],
+  plugins: ["hyper-flat"],
 
   // in development, you can create a directory under
   // `~/.hyperterm_plugins/local/` and include it here
