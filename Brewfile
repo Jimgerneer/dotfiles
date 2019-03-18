@@ -15,6 +15,6 @@ cask "skitch"
 cask "gitkraken"
 brew "nodenv"
 brew "rbenv"
-brew "docker"
+cask "docker"
+brew "neovim"
 mas "Airmail 3", id: 918858936
-mas "Fantastical 2", id: 975937182
