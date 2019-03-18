@@ -1,10 +1,19 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+      force: true
+
 - clean: ['~']
+
+- shell:
+  - [git submodule init]
+  - [git submodule update --init --recursive, Installing submodules]
+  - [sh pre-install.sh, Running pre installation script]
+  - [brew bundle, Installing Homebrew formulas from Brewfile]
 
 - link:
     ~/.gitconfig: gitconfig
-
-- clean: ['~']
-
-- link:
-
-
+    ~/.zshrc: zshrc
+    ~/Brewfile: Brewfile
+    ~/.hyper.js: hyper
