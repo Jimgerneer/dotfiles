@@ -17,7 +17,7 @@
     ~/.zshrc: zshrc
     ~/Brewfile: Brewfile
     #hyper
-    ~/.Library/Application Support/Hyper/.hyper.js: hyper.js
+    ~/.hyper.js: hyper.js
     #VS code
     ~/Library/Application Support/Code/User/settings.json: vscode/settings.json
     ~/Library/Application Support/Code/User/keybindings.json: vscode/keybindings.json
