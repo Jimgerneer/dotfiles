@@ -16,4 +16,9 @@
     ~/.gitconfig: gitconfig
     ~/.zshrc: zshrc
     ~/Brewfile: Brewfile
-    ~/.hyper.js: hyper
+    #hyper
+    ~/.Library/Application Support/Hyper/.hyper.js: hyper.js
+    #VS code
+    ~/Library/Application Support/Code/User/settings.json: vscode/settings.json
+    ~/Library/Application Support/Code/User/keybindings.json: vscode/keybindings.json
+    ~/Library/Application Support/Code/User/snippets.json: vscode/snippets.json
