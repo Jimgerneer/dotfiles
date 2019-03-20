@@ -17,6 +17,8 @@
 - link:
     ~/.gitconfig: gitconfig
     ~/.zshrc: zshrc
+    ~/.eslintrc: eslintrc.json
+    ~/.prettierrc: prettierrc.js
     ~/Brewfile: Brewfile
     #hyper
     ~/.hyper.js: hyper.js

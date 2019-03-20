@@ -27,6 +27,9 @@ module.exports = {
     // custom padding (css format, i.e.: `top right bottom left`)
     padding: '12px 14px',
 
+    // default windowSize
+    windowSize: [1300, 450],
+
     // some color overrides. see http://bit.ly/29k1iU2 for
     // the full list
     colors: [
@@ -62,7 +65,15 @@ module.exports = {
   //   `@company/project`
   //   `project#1.0.1`
 
-  plugins: ["hyper-flat", "hypercwd", "hyperpower", "hyper-quit"],
+  plugins: [
+    "hyper-flat",
+    "hypercwd",
+    "hyperpower",
+    "hyper-quit",
+    "hyperterm-tabs",
+    "hyperterm-paste",
+    "hyper-tabs-enhanced"
+  ],
 
   // in development, you can create a directory under
   // `~/.hyperterm_plugins/local/` and include it here

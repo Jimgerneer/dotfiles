@@ -3,9 +3,7 @@
   "editor.tabSize": 2,
   "editor.renderWitespace": "all",
   "editor.cursorBlinker": "expand",
-  "editor.fonLigatures": true,
-  "editor.fontFamily": "iosevka-bold",
-  "window.zoomLevel": -1,
+  "window.zoomLevel": 0,
   "window.title": "${dirty}${separator}${rootName}${separator}${dirty}",
   "vim.easymotion": true,
   "vim.useSystemClipboard": true,
@@ -33,6 +31,13 @@
       "after": ["<Esc>"]
     }
   ],
-  "workbench.colorTheme": "Hyper Term Black"
-
+  "editor.fontWeight": "100",
+  "editor.fontLigatures": true,
+  "editor.fontFamily": "fira code",
+  "workbench.colorTheme": "Hyper Term Black",
+  "editor.cursorStyle": "block",
+  "editor.minimap.enabled": false,
+  "editor.renderLineHighlight": "none",
+  // Use ZSH as the integrated terminal shell.
+  "terminal.integrated.shell.osx": "zsh",
 }
