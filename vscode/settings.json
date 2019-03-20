@@ -1,4 +1,38 @@
 {
+  "editor.fontSize": 24,
   "editor.tabSize": 2,
+  "editor.renderWitespace": "all",
+  "editor.cursorBlinker": "expand",
+  "editor.fonLigatures": true,
+  "editor.fontFamily": "iosevka-bold",
+  "window.zoomLevel": -1,
+  "window.title": "${dirty}${separator}${rootName}${separator}${dirty}",
+  "vim.easymotion": true,
+  "vim.useSystemClipboard": true,
+  "vim.leader": "<space>",
+  "vim.easymotionMarkerFontFamily": "Times new roman",
+  "vim.easymotionMarkerFontSize": "16",
+  "vim.easymotionMarkerHeight": 20,
+  "vim.easymotionMarkerWidthPerChar": 12,
+  "vim.visualstar": true,
+  "vim.easymotionKeys": "asdfjkl;qweruiopzxcvnm",
+  "editor.cursorSmoothCaretAnimation": true,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/coverage": true,
+    "**/build": true,
+    "**/tmp": true,
+    "**/__snapshots": true,
+  },
+  "vim.enableNeovim": true,
+  "vim.neovimPath": "/usr/local/bin/nvim",
+  "vim.insertModeKeyBindings": [
+    {
+      "before": ["j","j"],
+      "after": ["<Esc>"]
+    }
+  ],
   "workbench.colorTheme": "Hyper Term Black"
+
 }

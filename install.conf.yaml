@@ -11,6 +11,8 @@
   - [git submodule update --init --recursive, Installing submodules]
   - [sh pre-install.sh, Running pre installation script]
   - [brew bundle, Installing Homebrew formulas from Brewfile]
+  - [defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false, Set press and hold false for VSCode]
+  - [defaults write com.microsoft.VSCodeInsiders ApplePressAndHoldEnabled -bool false, Set press and hold false for VSCode insiders]
 
 - link:
     ~/.gitconfig: gitconfig
@@ -21,4 +23,6 @@
     #VS code
     ~/Library/Application Support/Code/User/settings.json: vscode/settings.json
     ~/Library/Application Support/Code/User/keybindings.json: vscode/keybindings.json
-    ~/Library/Application Support/Code/User/snippets.json: vscode/snippets.json
+    ~/Library/Application Support/Code/User/snippets:
+      path: vscode/snippets
+      glob: true
