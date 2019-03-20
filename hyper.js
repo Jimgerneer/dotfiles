@@ -50,13 +50,19 @@ module.exports = {
     shell: 'zsh'
   },
 
+  //Settings for hypercwd
+  hypercwd: {
+  	initialWorkingDirectory: "~/Code"
+  },
+
   // a list of plugins to fetch and install from npm
   // format: [@org/]project[#version]
   // examples:
   //   `hyperpower`
   //   `@company/project`
   //   `project#1.0.1`
-  plugins: ["hyper-flat"],
+
+  plugins: ["hyper-flat", "hypercwd", "hyperpower", "hyper-quit"],
 
   // in development, you can create a directory under
   // `~/.hyperterm_plugins/local/` and include it here
