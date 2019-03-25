@@ -21,14 +21,22 @@
     "**/coverage": true,
     "**/build": true,
     "**/tmp": true,
-    "**/__snapshots": true,
+    "**/__snapshots": true
   },
   "vim.enableNeovim": true,
   "vim.neovimPath": "/usr/local/bin/nvim",
   "vim.insertModeKeyBindings": [
     {
-      "before": ["j","j"],
+      "before": ["j", "j"],
       "after": ["<Esc>"]
+    },
+    {
+      "before": ["<Leader>", "w", "-"],
+      "commands": [":sp"]
+    },
+    {
+      "before": ["<Leader>", "w", "|"],
+      "commands": [":vsp"]
     }
   ],
   "editor.fontWeight": "100",
@@ -40,4 +48,5 @@
   "editor.renderLineHighlight": "none",
   // Use ZSH as the integrated terminal shell.
   "terminal.integrated.shell.osx": "zsh",
+  "editor.formatOnSave": true
 }
