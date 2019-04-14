@@ -25,18 +25,20 @@
   },
   "vim.enableNeovim": true,
   "vim.neovimPath": "/usr/local/bin/nvim",
+  "vim.normalModeKeyBindings": [
+    {
+      "before": [" ", "w", "-"],
+      "commands": [":sp"]
+    },
+    {
+      "before": [" ", "w", "/"],
+      "commands": [":vsp"]
+    }
+  ],
   "vim.insertModeKeyBindings": [
     {
       "before": ["j", "j"],
       "after": ["<Esc>"]
-    },
-    {
-      "before": ["<Leader>", "w", "-"],
-      "commands": [":sp"]
-    },
-    {
-      "before": ["<Leader>", "w", "|"],
-      "commands": [":vsp"]
     }
   ],
   "editor.fontWeight": "100",
@@ -46,7 +48,6 @@
   "editor.cursorStyle": "block",
   "editor.minimap.enabled": false,
   "editor.renderLineHighlight": "none",
-  // Use ZSH as the integrated terminal shell.
   "terminal.integrated.shell.osx": "zsh",
   "editor.formatOnSave": true
 }
