@@ -1,0 +1,90 @@
+{
+  "Jest test shallow component": {
+    "prefix": "jtc",
+    "body": [
+      "import React from 'react';",
+      "import { shallow } from 'enzyme';",
+      "",
+      "import { $1 }  from '../$1';",
+      "",
+			"const setup = newProps => {",
+			"  const props = {",
+			"    ...newProps",
+			"	 };"
+			"",
+			"  const enzymeWrapper = shallow(<$1 {...props} />);",
+			"",
+      "  return {",
+      "    props,",
+      "    enzymeWrapper",
+      "  };",
+      "};",
+      "",
+      "describe('<$1 />', () => {",
+      "	it('renders as expected', () => {",
+      "		const { enzymeWrapper } = setup();",
+      "		expect(enzymeWrapper).toMatchSnapshot();",
+			"	});",
+			"",
+			"	$0"
+      "});"
+    ],
+    "description": "Boilerplate for react component testing"
+	},
+	"Jest test function": {
+		"prefix": "jtf",
+		"body": [
+			"import $1 from '../$1';",
+			"",
+      "describe('$1', () => {",
+      "	it('$2', () => {",
+			"	$0"
+			"	});",
+      "});"
+		]
+	},
+	"Todo page": {
+		"prefix": "todostub",
+    "description": "Todo page stub",
+		"body": [
+      "import React, { Component } from 'react';",
+      "import { connect } from 'react-redux';",
+      "import PropTypes from 'prop-types';",
+      "import { $2 } from '../../../actions';",
+      "",
+      "export class $1 extends Component {",
+        "static propTypes = {",
+          "refi: PropTypes.shape({",
+            "id: PropTypes.string.isRequired",
+          "}),",
+          "$2: PropTypes.func.isRequired",
+        "};",
+        "",
+        "onSubmit = values => {",
+          "const {",
+            "$2,",
+            "refi: { id }",
+          "} = this.props;",
+          "$2($3);",
+        "};",
+        "",
+        "render() {",
+          "return (",
+            "<div>",
+              "<h3>$4</h3>",
+              "<p>$5</p>",
+              "$6",
+            "</div>",
+          ");",
+        "}",
+      "}",
+      "",
+      "export default connect(",
+        "null,",
+        "{",
+          "$2",
+        "}",
+      ")($1);",
+		]
+	}
+}
