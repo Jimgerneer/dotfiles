@@ -33,6 +33,10 @@
     {
       "before": [" ", "w", "/"],
       "commands": [":vsp"]
+    },
+    {
+      "before": [" ", "f", "s"],
+      "commands": [":w"]
     }
   ],
   "vim.insertModeKeyBindings": [
@@ -49,5 +53,6 @@
   "editor.minimap.enabled": false,
   "editor.renderLineHighlight": "none",
   "terminal.integrated.shell.osx": "zsh",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "workbench.editor.enablePreview": false
 }
