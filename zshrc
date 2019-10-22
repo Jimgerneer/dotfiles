@@ -93,3 +93,13 @@ eval "$(rbenv init -)"
 eval "$(direnv hook zsh)"
 
 alias eltest='fswatch lib/ test/ | mix test --listen-on-stdin'
+
+function dev() {
+  export ol_dir=$(pwd)
+  cd
+  if ( export destination=$( fd -t d | fzf --preview 'tree -aCt {}' --reverse --margin=5%)); then
+    cd $destination
+    bash ~/.dotfiles/dev_tmux.sh
+    fi
+  cd $ol_dir
+}

@@ -4,21 +4,30 @@
       relink: true
       force: true
 
-- clean: ['~']
+- clean: ["~"]
 
 - shell:
-  - [git submodule init]
-  - [git submodule update --init --recursive, Installing submodules]
-  - [sh pre-install.sh, Running pre installation script]
-  - [brew bundle, Installing Homebrew formulas from Brewfile]
-  - [defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false, Set press and hold false for VSCode]
-  - [defaults write com.microsoft.VSCodeInsiders ApplePressAndHoldEnabled -bool false, Set press and hold false for VSCode insiders]
+    - [git submodule init]
+    - [git submodule update --init --recursive, Installing submodules]
+    - [sh pre-install.sh, Running pre installation script]
+    - [brew bundle, Installing Homebrew formulas from Brewfile]
+    - [
+        defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false,
+        Set press and hold false for VSCode,
+      ]
+    - [
+        defaults write com.microsoft.VSCodeInsiders ApplePressAndHoldEnabled -bool false,
+        Set press and hold false for VSCode insiders,
+      ]
 
 - link:
     ~/.gitconfig: gitconfig
     ~/.zshrc: zshrc
     ~/.eslintrc: eslintrc.json
     ~/.prettierrc: prettierrc.js
+    ~/.tmux.conf: tmux.conf
+    ~/.vimrc: vimrc
+    ~/.vim: vim
     ~/Brewfile: Brewfile
     #hyper
     ~/.hyper.js: hyper.js

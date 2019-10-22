@@ -20,6 +20,9 @@ brew "nodenv"
 brew "rbenv"
 cask "docker"
 brew "neovim"
+brew "fzf"
+brew "fd"
+brew "tree"
 mas "Airmail 3", id: 918858936
 mas "Magnet", id: 441258766
 mas "Fantastical 2", id: 975937182
