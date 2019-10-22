@@ -27,7 +27,9 @@
     ~/.prettierrc: prettierrc.js
     ~/.tmux.conf: tmux.conf
     ~/.vimrc: vimrc
-    ~/.vim: vim
+    ~/.vim: 
+      glob: true
+      path: vim/*
     ~/Brewfile: Brewfile
     #hyper
     ~/.hyper.js: hyper.js
