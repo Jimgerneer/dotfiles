@@ -59,6 +59,7 @@ plugins=(git)
 
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 # export MANPATH="/usr/local/man:$MANPATH"
+export PATH="$HOME/.rbenv/bin:$PATH"
 
 source $ZSH/oh-my-zsh.sh
 
@@ -88,3 +89,7 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 eval "$(nodenv init -)"
 
+eval "$(rbenv init -)"
+eval "$(direnv hook zsh)"
+
+alias eltest='fswatch lib/ test/ | mix test --listen-on-stdin'

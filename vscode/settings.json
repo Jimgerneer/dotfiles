@@ -27,22 +27,45 @@
   "vim.neovimPath": "/usr/local/bin/nvim",
   "vim.normalModeKeyBindings": [
     {
-      "before": [" ", "w", "-"],
-      "commands": [":sp"]
+      "before": [
+        " ",
+        "w",
+        "-"
+      ],
+      "commands": [
+        ":sp"
+      ]
     },
     {
-      "before": [" ", "w", "/"],
-      "commands": [":vsp"]
+      "before": [
+        " ",
+        "w",
+        "/"
+      ],
+      "commands": [
+        ":vsp"
+      ]
     },
     {
-      "before": [" ", "f", "s"],
-      "commands": [":w"]
+      "before": [
+        " ",
+        "f",
+        "s"
+      ],
+      "commands": [
+        ":w"
+      ]
     }
   ],
   "vim.insertModeKeyBindings": [
     {
-      "before": ["j", "j"],
-      "after": ["<Esc>"]
+      "before": [
+        "j",
+        "j"
+      ],
+      "after": [
+        "<Esc>"
+      ]
     }
   ],
   "editor.fontWeight": "100",
@@ -54,5 +77,6 @@
   "editor.renderLineHighlight": "none",
   "terminal.integrated.shell.osx": "zsh",
   "editor.formatOnSave": true,
-  "workbench.editor.enablePreview": false
+  "workbench.editor.enablePreview": false,
+  "elixirLS.fetchDeps": false
 }
