@@ -98,9 +98,11 @@ alias eltest='fswatch lib/ test/ | mix test --listen-on-stdin'
 function dev() {
   export ol_dir=$(pwd)
   cd
-  if ( export destination=$( fd -t d | fzf --preview 'tree -aCt {}' --reverse --margin=5%)); then
+  export destination=$( fd -t d | fzf --preview 'tree -aCt {}' --reverse --margin=5%)
+  if [[ ! -z $destination ]]; then
     cd $destination
+    echo $destination
     bash ~/.dotfiles/dev_tmux.sh
-    fi
+  fi
   cd $ol_dir
 }

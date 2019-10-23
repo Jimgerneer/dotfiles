@@ -12,7 +12,7 @@ call plug#begin('~/.vim/jimbo_jambos_jammin_plugins')
   Plug 'junegunn/vim-plug'               " The current plugin manager
                                          " https://github.com/junegunn/vim-plug
 
-  Plug 'neoclide/coc.nvim'               " extensions can do a lot of what you can do in vscode
+  Plug 'neoclide/coc.nvim', {'tag': '*', 'branch': 'release'} " extensions can do a lot of what you can do in vscode
                                          " https://github.com/neoclide/coc.nvim/wiki/Using-coc-extensions#why-are-coc-extensions-needed
 
 
@@ -50,6 +50,11 @@ call plug#begin('~/.vim/jimbo_jambos_jammin_plugins')
                                          " Plug 'sheerun/vim-polyglot'            " autoloaded multiple language support (IT ALSO CAN BE SLOW WITH SOME TYPES OF FILES, WHICH IS WHY I COMMENTED IT OUT)
                                          " https://github.com/sheerun/vim-polyglot
   Plug 'mhinz/vim-startify'
+
+  Plug 'sheerun/vim-polyglot'
+
+  Plug 'sainnhe/vim-color-forest-night'
+
 
 call plug#end()
 
@@ -116,4 +121,11 @@ endif
 " these can really get slow, especially ruby and rails
 if &runtimepath =~ 'vim-polyglot'
   let g:polyglot_disabled = ['markdown', 'fish', 'json', 'rails', 'ruby'] "Some of these are just so slow
+endif
+
+if &runtimepath =~ 'forest-night'
+  colorscheme forest-night 
+  if exists('$TMUX')
+    hi Normal guibg=NONE
+  endif
 endif

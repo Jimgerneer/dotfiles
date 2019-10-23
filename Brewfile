@@ -23,6 +23,7 @@ brew "neovim"
 brew "fzf"
 brew "fd"
 brew "tree"
+brew "alacritty"
 mas "Airmail 3", id: 918858936
 mas "Magnet", id: 441258766
 mas "Fantastical 2", id: 975937182
