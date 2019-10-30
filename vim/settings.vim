@@ -8,7 +8,7 @@ set shell=sh
 set clipboard=unnamed
 
 " Highlight the current line (CAN ALSO SLOW THINGS DOWN)
-" set cursorline
+set cursorline
 
 set concealcursor=nc
 

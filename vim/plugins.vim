@@ -5,9 +5,9 @@ if empty(glob('~/.vim/autoload/plug.vim'))
 endif
 
 call plug#begin('~/.vim/jimbo_jambos_jammin_plugins')
-  " Plug 'dense-analysis/ale'            " Uncomment if you want live linting
+  Plug 'dense-analysis/ale'            " Uncomment if you want live linting
 
-  " Plug 'vim-airline/vim-airline'       " Uncomment if you want a status bar
+  Plug 'vim-airline/vim-airline'       " Uncomment if you want a status bar
 
   Plug 'junegunn/vim-plug'               " The current plugin manager
                                          " https://github.com/junegunn/vim-plug
@@ -16,6 +16,7 @@ call plug#begin('~/.vim/jimbo_jambos_jammin_plugins')
                                          " https://github.com/neoclide/coc.nvim/wiki/Using-coc-extensions#why-are-coc-extensions-needed
 
 
+  Plug 'francoiscabrol/ranger.vim'       "File manager
   Plug 'junegunn/fzf.vim'                    " https://github.com/junegunn/fzf
   Plug '/usr/local/opt/fzf'              " You'll have to install fzf if you don't have it, but I really recommend it,
                                          " it's super fast and very useful for a ton of different things
@@ -52,8 +53,9 @@ call plug#begin('~/.vim/jimbo_jambos_jammin_plugins')
   Plug 'mhinz/vim-startify'
 
   Plug 'sheerun/vim-polyglot'
+  Plug 'gkapfham/vim-vitamin-onec'
 
-  Plug 'sainnhe/vim-color-forest-night'
+  Plug 'tpope/vim-endwise'
 
 
 call plug#end()
@@ -105,7 +107,7 @@ if &runtimepath =~ 'fzf.vim'
   nnoremap <silent> <Leader>b :Buffers<CR>
   nnoremap <silent> <Leader>G :Lines<CR>
   nnoremap <silent> <Leader>c :Commits<CR>
-  " note: THERE'S SOME WHITESPACE AT THE END OF \/THIS\/ LINE AND IT'S INTENTIONAL
+  " note: THERE'S SOME WHITESPACE AT THE END OF \/THIS\/ LINE AND IT'S INTENTIONAL 
   nnoremap <silent> <Leader>F :Rg 
   nnoremap <silent> <Leader>C :Colors<CR>
   " These two are pretty nice, they just give you a nice searchable list of
@@ -123,8 +125,13 @@ if &runtimepath =~ 'vim-polyglot'
   let g:polyglot_disabled = ['markdown', 'fish', 'json', 'rails', 'ruby'] "Some of these are just so slow
 endif
 
-if &runtimepath =~ 'forest-night'
-  colorscheme forest-night 
+if &runtimepath =~ 'ranger'
+  let g:ranger_replace_netrw = 1
+  let g:ranger_command_override = 'ranger --cmd "set show_hidden=true"'
+endif
+
+if &runtimepath =~ 'vim-vitamin-onec'
+  colorscheme vitaminonec
   if exists('$TMUX')
     hi Normal guibg=NONE
   endif
