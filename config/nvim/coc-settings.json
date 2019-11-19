@@ -1,0 +1,15 @@
+{
+  "languageserver": {
+      "elmLS": {
+        "command": "elm-language-server",
+        "filetypes": ["elm"],
+        "rootPatterns": ["elm.json"],
+        "initializationOptions": {
+          "elmAnalyseTrigger": "change"
+        }
+      }
+    },
+  "codeLens.enable": true,
+  "coc.preferences.formatOnSaveFiletypes": ["rust", "typescript", "elm", "elixir", "javascript", "typescriptreact", "typescript.tsx", "javascriptreact"],
+  "eslint.filetypes": ["typescript", "javascript", "typescriptreact", "typescript.tsx", "javascriptreact"]
+}

@@ -27,6 +27,10 @@
     ~/.prettierrc: prettierrc.js
     ~/.tmux.conf: tmux.conf
     ~/.vimrc: vimrc
+    ~/.config/:
+      glob: true
+      path: config/*
+      create: true
     ~/.vim: 
       glob: true
       path: vim/*
