@@ -98,7 +98,7 @@ alias eltest='fswatch lib/ test/ | mix test --listen-on-stdin'
 function dev() {
   export ol_dir=$(pwd)
   cd
-  export destination=$( fd -t d | fzf --preview 'tree -aCt {}' --reverse --margin=5%)
+  export destination=$( fd --hidden -t d | fzf --preview 'tree -aCt {}' --reverse --margin=5%)
   if [[ ! -z $destination ]]; then
     cd $destination
     echo $destination
