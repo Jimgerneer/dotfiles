@@ -32,6 +32,7 @@ call plug#begin('~/.vim/pluggers')
   Plug 'elixir-editors/vim-elixir'
   Plug 'leafgarland/typescript-vim'
   Plug 'ianks/vim-tsx'
+  Plug 'pangloss/vim-javascript'
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ STATUS BAR ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -40,7 +41,7 @@ call plug#begin('~/.vim/pluggers')
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ THEME ~~~~~~~~~~~~~~~~~~~~~~~~~
 
   Plug 'mhinz/vim-startify'
-  Plug 'gkapfham/vim-vitamin-onec'
+  Plug 'ajmwagar/vim-deus'
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ TIPPY TAPPY ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -67,6 +68,19 @@ if &runtimepath =~ 'startify'
   let g:startify_change_to_dir = 0
   let g:startify_change_to_vcs_root = 1
   let g:startify_lists = [{ 'type': 'dir', 'header': ['MRU'.  getcwd()] }]
+  let g:ascii = [
+        \" ▄▄▄██▀▀▀██▓ ███▄ ▄███▓",
+        \"   ▒██  ▓██▒▓██▒▀█▀ ██▒",
+        \"   ░██  ▒██▒▓██    ▓██░",
+        \"▓██▄██▓ ░██░▒██    ▒██",
+        \" ▓███▒  ░██░▒██▒   ░██▒",
+        \" ▒▓▒▒░  ░▓  ░ ▒░   ░  ░",
+        \"▒ ░▒░   ▒ ░░  ░      ░",
+        \" ░ ░ ░   ▒ ░░      ░",
+        \" ░   ░   ░         ░"   
+        \]
+
+  let g:startify_custom_header = g:ascii
 endif
 
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ COC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,8 +148,8 @@ endif
 
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RICE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if &runtimepath =~ 'vim-vitamin-onec'
-  colorscheme vitaminonec
+if &runtimepath =~ 'vim-deus'
+  colorscheme deus
   if exists('$TMUX')
     hi Normal guibg=NONE
   endif
