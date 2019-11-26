@@ -98,8 +98,14 @@ alias eltest='fswatch lib/ test/ | mix test --listen-on-stdin'
 function dev() {
   export ol_dir=$(pwd)
   cd
-  export destination=$( fd --hidden -t d | fzf --preview 'tree -aCt {}' --reverse --margin=5%)
-  if [[ ! -z $destination ]]; then
+  if [ "$#" -eq 1 ] && ! [ -d "Code/$1" ]
+  then
+    cd Code
+    git clone "$1"
+    cd $(echo "$1" | awk -F "/" '{print $NF}' | sed 's/\.git//')
+    bash ~/.dotfiles/dev_tmux.sh
+  elif export destination=$( fd --hidden -t d | fzf --preview 'tree -aCt {}' --reverse --margin=5%)
+  then
     cd $destination
     echo $destination
     bash ~/.dotfiles/dev_tmux.sh

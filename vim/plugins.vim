@@ -69,15 +69,15 @@ if &runtimepath =~ 'startify'
   let g:startify_change_to_vcs_root = 1
   let g:startify_lists = [{ 'type': 'dir', 'header': ['MRU'.  getcwd()] }]
   let g:ascii = [
-        \" ▄▄▄██▀▀▀██▓ ███▄ ▄███▓",
-        \"   ▒██  ▓██▒▓██▒▀█▀ ██▒",
-        \"   ░██  ▒██▒▓██    ▓██░",
-        \"▓██▄██▓ ░██░▒██    ▒██",
-        \" ▓███▒  ░██░▒██▒   ░██▒",
-        \" ▒▓▒▒░  ░▓  ░ ▒░   ░  ░",
-        \"▒ ░▒░   ▒ ░░  ░      ░",
-        \" ░ ░ ░   ▒ ░░      ░",
-        \" ░   ░   ░         ░"   
+        \"   ▄▄▄██▀▀▀██▓ ███▄ ▄███▓",
+        \"     ▒██  ▓██▒▓██▒▀█▀ ██▒",
+        \"     ░██  ▒██▒▓██    ▓██░",
+        \"  ▓██▄██▓ ░██░▒██    ▒██",
+        \"   ▓███▒  ░██░▒██▒   ░██▒",
+        \"   ▒▓▒▒░  ░▓  ░ ▒░   ░  ░",
+        \"  ▒ ░▒░   ▒ ░░  ░      ░",
+        \"   ░ ░ ░   ▒ ░░      ░",
+        \"   ░   ░   ░         ░"   
         \]
 
   let g:startify_custom_header = g:ascii
@@ -92,6 +92,7 @@ if &runtimepath =~ 'coc'
       \ <SID>check_back_space() ? "\<TAB>" :
       \ coc#refresh()
   inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+  inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 
   function! s:check_back_space() abort
     let col = col('.') - 1
