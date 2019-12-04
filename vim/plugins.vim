@@ -50,7 +50,7 @@ call plug#begin('~/.vim/pluggers')
   Plug 'tpope/vim-surround'              " Surround text with text
   Plug 'tpope/vim-commentary'            " All Hail Tpope
   Plug 'michaeljsmith/vim-indent-object' " Another default vscode vim plugin for indentation levels as text objects
-  Plug 'tpope/vim-endwise'
+  " Plug 'tpope/vim-endwise'
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ GIT GUD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -137,7 +137,23 @@ if &runtimepath =~ 'fzf.vim'
   " preview for files
   " Can also be used in a similar way to set up previews of most lists
   command! -bang -nargs=? -complete=dir Files
-    \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
+    \ call fzf#vim#files(<q-args>, fzf#vim#with_preview({'source': 'ag --hidden --ignore .git -g ""'}), <bang>0)
+
+  if has('nvim')
+    let $FZF_DEFAULT_OPTS .= ' --border --margin=0,2'
+    function! FloatingFZF()
+      let width = float2nr(&columns * 0.9)
+      let height = float2nr(&lines * 0.6)
+      let opts = { 'relative': 'editor',
+                 \ 'row': (&lines - height) / 2,
+                 \ 'col': (&columns - width) / 2,
+                 \ 'width': width,
+                 \ 'height': height }
+      let win = nvim_open_win(nvim_create_buf(v:false, v:true), v:true, opts)
+      call setwinvar(win, '&winhighlight', 'NormalFloat:Normal')
+    endfunction
+    let g:fzf_layout = { 'window': 'call FloatingFZF()' }
+  endif
 endif
 
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

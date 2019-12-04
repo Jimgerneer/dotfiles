@@ -2,16 +2,16 @@
   "entries": {
     "tap": {
       "homebrew/bundle": {
-        "revision": "1a41629972a351085d297e2c336f8eda0dc771eb"
+        "revision": "2efa0de33f2885bfd567ba4fdb1ab91f1be8d06c"
       },
       "homebrew/cask": {
-        "revision": "0667be465cf78165cd2e9a93cac59aef2b5d35f6"
+        "revision": "925ef2262d91d9ff85498bae51bd23fcb2baeec4"
       },
       "homebrew/core": {
-        "revision": "0c5930b3e5dd9bc366924a2d7a99acc6b55d77d9"
+        "revision": "a22838da5b3a8616af22cc689105431fd4a42dd1"
       },
       "caskroom/fonts": {
-        "revision": "e927bee88cde81c9fb04b2ab3d4872482387ee51"
+        "revision": "b506e52bfa56aa435a5d064f0e723095f139a614"
       },
       "neovim/neovim": {
         "revision": "e587b5c90456a895a11bc5ae81e5cfdde6b23dd4"
@@ -140,26 +140,22 @@
         }
       },
       "elm": {
-        "version": "0.19.0",
+        "version": "0.19.1",
         "bottle": {
           "cellar": ":any_skip_relocation",
           "prefix": "/usr/local",
           "files": {
+            "catalina": {
+              "url": "https://homebrew.bintray.com/bottles/elm-0.19.1.catalina.bottle.tar.gz",
+              "sha256": "e1bbfe4ff7deba3ed60eb55b81b86b6d3346325bea584802ca1212369f0fa0bb"
+            },
             "mojave": {
-              "url": "https://homebrew.bintray.com/bottles/elm-0.19.0.mojave.bottle.tar.gz",
-              "sha256": "5934d1b214fd2449b1a0222ad5c7b97b7309a21c97078634d6b32b3191dddc45"
+              "url": "https://homebrew.bintray.com/bottles/elm-0.19.1.mojave.bottle.tar.gz",
+              "sha256": "288eeb47caccfaa9bae220492cee8de7206d40b7760e1e309a139a2398f9710d"
             },
             "high_sierra": {
-              "url": "https://homebrew.bintray.com/bottles/elm-0.19.0.high_sierra.bottle.tar.gz",
-              "sha256": "4655392e3e985c90f9e23b03438a8587475b48c1e1b0dabc2d74358f1b06daef"
-            },
-            "sierra": {
-              "url": "https://homebrew.bintray.com/bottles/elm-0.19.0.sierra.bottle.tar.gz",
-              "sha256": "e0e45eb3388efe4a8147a65121d067ffad875952146c11519e8e564095de139b"
-            },
-            "el_capitan": {
-              "url": "https://homebrew.bintray.com/bottles/elm-0.19.0.el_capitan.bottle.tar.gz",
-              "sha256": "e2a5f47750fb6a487e5220a3ac234b209acdb7edcde7e42c2ebe2507f8a3a5cf"
+              "url": "https://homebrew.bintray.com/bottles/elm-0.19.1.high_sierra.bottle.tar.gz",
+              "sha256": "7fb65ff925701c39bbc7d9a5099cd88f10a56949ae019bc8817035ed1d56edbd"
             }
           }
         }
@@ -209,6 +205,36 @@
             }
           }
         }
+      },
+      "ag": null,
+      "the_silver_searcher": {
+        "version": "2.2.0",
+        "bottle": {
+          "cellar": ":any",
+          "prefix": "/usr/local",
+          "files": {
+            "catalina": {
+              "url": "https://homebrew.bintray.com/bottles/the_silver_searcher-2.2.0.catalina.bottle.tar.gz",
+              "sha256": "6fd80fdd0896dae09c01d3c9785ddd658bb5f2f229e7d011d3fbdde887bc35d0"
+            },
+            "mojave": {
+              "url": "https://homebrew.bintray.com/bottles/the_silver_searcher-2.2.0.mojave.bottle.tar.gz",
+              "sha256": "e57f89664f48c131dfb462dc4be2f5265867d827f82efb1c3841ba71d9156ed0"
+            },
+            "high_sierra": {
+              "url": "https://homebrew.bintray.com/bottles/the_silver_searcher-2.2.0.high_sierra.bottle.tar.gz",
+              "sha256": "0bf5394d8ab5f61b8fbb593249f556f13b358d16eb0d3c97215be3da0476e94b"
+            },
+            "sierra": {
+              "url": "https://homebrew.bintray.com/bottles/the_silver_searcher-2.2.0.sierra.bottle.tar.gz",
+              "sha256": "2365e24e5d0b1bef64b35c6a8f9e4f61d1f38eafe38c06d6e0acefc6a9a955db"
+            },
+            "el_capitan": {
+              "url": "https://homebrew.bintray.com/bottles/the_silver_searcher-2.2.0.el_capitan.bottle.tar.gz",
+              "sha256": "1f35dcee133d638a16462db711560b624020e9dd8f732ac5a6f13a09b694421a"
+            }
+          }
+        }
       }
     },
     "cask": {
@@ -237,7 +263,7 @@
         "version": "2.1.2"
       },
       "alacritty": {
-        "version": "0.3.3"
+        "version": "0.4.0"
       },
       "google-chrome": {
         "version": "73.0.3683.75"
@@ -259,9 +285,9 @@
   "system": {
     "macos": {
       "catalina": {
-        "HOMEBREW_VERSION": "2.1.16",
+        "HOMEBREW_VERSION": "2.2.0",
         "HOMEBREW_PREFIX": "/usr/local",
-        "Homebrew/homebrew-core": "0c5930b3e5dd9bc366924a2d7a99acc6b55d77d9",
+        "Homebrew/homebrew-core": "a22838da5b3a8616af22cc689105431fd4a42dd1",
         "CLT": "",
         "Xcode": "10.1",
         "macOS": "10.15.1"
