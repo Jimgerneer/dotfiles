@@ -83,6 +83,10 @@ if &runtimepath =~ 'startify'
   let g:startify_custom_header = g:ascii
 endif
 
+if &runtimepath =~ 'elm-vim'
+  let g:elm_setup_keybindings = 0
+endif
+
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ COC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if &runtimepath =~ 'coc'

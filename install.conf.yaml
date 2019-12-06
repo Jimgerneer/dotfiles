@@ -19,6 +19,9 @@
         defaults write com.microsoft.VSCodeInsiders ApplePressAndHoldEnabled -bool false,
         Set press and hold false for VSCode insiders,
       ]
+    -
+      command: bash ./scripts/npm_installations.sh
+      description: Setting up npm packages
 
 - link:
     ~/.gitconfig: gitconfig
