@@ -1,10 +1,10 @@
 #!/bin/bash
 
-npm update -g
+sudo npm update -g
 
 PACKAGES=(
   elm-oracle
   @elm-tooling/elm-language-server
 )
 
-npm install -g ${PACKAGES[@]}
+sudo npm install -g ${PACKAGES[@]}

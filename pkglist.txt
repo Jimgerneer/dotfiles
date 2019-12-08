@@ -1,0 +1,16 @@
+alacritty
+brave
+elm-platform
+exa
+fzf
+fd
+nodenv
+neovim
+npm
+otf-fira-code
+ripgrep
+ranger
+teamspeak3
+the_silver_searcher
+tmux
+tree
