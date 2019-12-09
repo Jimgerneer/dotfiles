@@ -1,5 +1,6 @@
 # Path to your oh-my-zsh installation.
-export ZSH=$HOME/.oh-my-zsh
+export ZSH=/usr/share/oh-my-zsh/
+#export ZSH=$HOME/.oh-my-zsh
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -57,9 +58,9 @@ plugins=(git)
 
 # User configuration
 
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+#export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 # export MANPATH="/usr/local/man:$MANPATH"
-export PATH="$HOME/.rbenv/bin:$PATH"
+#export PATH="$HOME/.rbenv/bin:$PATH"
 
 source $ZSH/oh-my-zsh.sh
 
@@ -88,10 +89,10 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias ls="ls -la "
-eval "$(nodenv init -)"
+#eval "$(nodenv init -)"
 
-eval "$(rbenv init -)"
-eval "$(direnv hook zsh)"
+#eval "$(rbenv init -)"
+#eval "$(direnv hook zsh)"
 
 alias eltest='fswatch lib/ test/ | mix test --listen-on-stdin'
 
@@ -112,3 +113,14 @@ function dev() {
   fi
   cd $ol_dir
 }
+# The following lines were added by compinstall
+zstyle :compinstall filename '/home/decoy/.zshrc'
+
+autoload -Uz compinit
+compinit
+# End of lines added by compinstall
+# Lines configured by zsh-newuser-install
+HISTFILE=~/.histfile
+HISTSIZE=10000
+SAVEHIST=1000
+# End of lines configured by zsh-newuser-install

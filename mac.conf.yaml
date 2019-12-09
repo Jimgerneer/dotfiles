@@ -7,6 +7,7 @@
 
 
 - link:
+    ~/.gitconfig: work-config/gitconfig
     ~/Brewfile: Brewfile
     #hyper
     ~/.hyper.js: hyper.js

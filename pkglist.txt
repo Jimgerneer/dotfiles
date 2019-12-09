@@ -1,12 +1,13 @@
 alacritty
 brave
-elm-platform
+elm-platform-bin
 exa
 fzf
 fd
 nodenv
 neovim
 npm
+oh-my-zsh-git
 otf-fira-code
 ripgrep
 ranger
@@ -14,3 +15,5 @@ teamspeak3
 the_silver_searcher
 tmux
 tree
+zathura
+zathura-pdf-mupdf

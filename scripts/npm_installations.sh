@@ -1,10 +1,13 @@
 #!/bin/bash
 
-sudo npm update -g
+sudo chown -R $(whoami) ~/.npm-packages
+sudo chown -R $(whoami) /usr/local/lib/node_modules
+
+npm update -g
 
 PACKAGES=(
   elm-oracle
   @elm-tooling/elm-language-server
 )
 
-sudo npm install -g ${PACKAGES[@]}
+npm install -g ${PACKAGES[@]}
