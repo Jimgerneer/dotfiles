@@ -163,8 +163,12 @@ endif
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if &runtimepath =~ 'ranger'
+  let g:ranger_map_keys = 0
+  nnoremap <Leader>f :Ranger<CR>
+
   let g:ranger_replace_netrw = 1
   let g:ranger_command_override = 'ranger --cmd "set show_hidden=true"'
+  " let g:ranger_on_exit = 'bw!'
 endif
 
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RICE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
