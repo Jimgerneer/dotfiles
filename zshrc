@@ -61,6 +61,11 @@ plugins=(git)
 #export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 # export MANPATH="/usr/local/man:$MANPATH"
 #export PATH="$HOME/.rbenv/bin:$PATH"
+#export PATH="$HOME/.npm-packages:$PATH"
+PATH="$HOME/.node_modules/bin:$PATH"
+export npm_config_prefix=~/.node_modules
+
+
 
 source $ZSH/oh-my-zsh.sh
 
