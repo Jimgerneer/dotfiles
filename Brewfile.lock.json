@@ -2,16 +2,16 @@
   "entries": {
     "tap": {
       "homebrew/bundle": {
-        "revision": "914c6634a0d9cb5fb30235a5d79739ce2302d711"
+        "revision": "dc16c62efeaca298c6e3565663192fbe0081a6aa"
       },
       "homebrew/cask": {
-        "revision": "94033400623f679e059907730e437e8877d7887a"
+        "revision": "52f642d5bd68b71b58d25b6633378569cc53a032"
       },
       "homebrew/core": {
-        "revision": "70ee7daeb9b6c8c82eee6edb2204a88f9b174820"
+        "revision": "f2463cbba086689c872cddd3a8bc242976a603ff"
       },
       "caskroom/fonts": {
-        "revision": "b506e52bfa56aa435a5d064f0e723095f139a614"
+        "revision": "d437ff8dd809d8aaf40de18e8948631553a54911"
       },
       "neovim/neovim": {
         "revision": "e587b5c90456a895a11bc5ae81e5cfdde6b23dd4"
@@ -48,7 +48,7 @@
         }
       },
       "ranger": {
-        "version": "1.9.2",
+        "version": "1.9.3",
         "bottle": false
       },
       "neovim": {
@@ -73,22 +73,22 @@
         }
       },
       "fzf": {
-        "version": "0.19.0",
+        "version": "0.20.0",
         "bottle": {
           "cellar": ":any_skip_relocation",
           "prefix": "/usr/local",
           "files": {
             "catalina": {
-              "url": "https://homebrew.bintray.com/bottles/fzf-0.19.0.catalina.bottle.tar.gz",
-              "sha256": "0be169ab230f6ff7b2322ee3d61fa0cd44e04300b688d207b67e910d948af442"
+              "url": "https://homebrew.bintray.com/bottles/fzf-0.20.0.catalina.bottle.tar.gz",
+              "sha256": "0d51962d904b7cd680fd316cc4691b5a562ce1ae77d4dcbfd40006f91c0945d6"
             },
             "mojave": {
-              "url": "https://homebrew.bintray.com/bottles/fzf-0.19.0.mojave.bottle.tar.gz",
-              "sha256": "5b5f429819576c27bab7bb658e3a99ae8043535e19d887fd9eaee954667ee715"
+              "url": "https://homebrew.bintray.com/bottles/fzf-0.20.0.mojave.bottle.tar.gz",
+              "sha256": "c523ba3a6266bb58697e27f45adbf1a01d13560c22a0302dc946d3277da53274"
             },
             "high_sierra": {
-              "url": "https://homebrew.bintray.com/bottles/fzf-0.19.0.high_sierra.bottle.tar.gz",
-              "sha256": "19e9ba86b09129e06530b322f892ba89fb1db3173219ca0228cc0fe2d8281fbc"
+              "url": "https://homebrew.bintray.com/bottles/fzf-0.20.0.high_sierra.bottle.tar.gz",
+              "sha256": "72b692bd10dcc27504657f6eaf40d60f60c290f2b13052d6e6ad08ecc65f9c48"
             }
           }
         }
@@ -235,6 +235,48 @@
             }
           }
         }
+      },
+      "http-server": {
+        "version": "0.12.1",
+        "bottle": {
+          "cellar": ":any_skip_relocation",
+          "prefix": "/usr/local",
+          "files": {
+            "catalina": {
+              "url": "https://homebrew.bintray.com/bottles/http-server-0.12.1.catalina.bottle.tar.gz",
+              "sha256": "d54d568edf8a41ba191780c8a5afbc283afc49a71db6a47259752eedbcd157b1"
+            },
+            "mojave": {
+              "url": "https://homebrew.bintray.com/bottles/http-server-0.12.1.mojave.bottle.tar.gz",
+              "sha256": "abbcfb975903d901ed6e2d81e93f527143c76ac1813d181d8a4cbb6c4de58dbe"
+            },
+            "high_sierra": {
+              "url": "https://homebrew.bintray.com/bottles/http-server-0.12.1.high_sierra.bottle.tar.gz",
+              "sha256": "df39f65c35d983da959f812f94ba676aa616b7c79ccb4385978ac37ec0055274"
+            }
+          }
+        }
+      },
+      "terraform": {
+        "version": "0.12.19",
+        "bottle": {
+          "cellar": ":any_skip_relocation",
+          "prefix": "/usr/local",
+          "files": {
+            "catalina": {
+              "url": "https://homebrew.bintray.com/bottles/terraform-0.12.19.catalina.bottle.tar.gz",
+              "sha256": "7f8a1371bc9786efd3aec4401c37a45b5f19dced3c62150cc97cf5e93a24817f"
+            },
+            "mojave": {
+              "url": "https://homebrew.bintray.com/bottles/terraform-0.12.19.mojave.bottle.tar.gz",
+              "sha256": "87fb6c29636c1a19eeac2ce5b4b4cde1018da45323915a4a441006eb81d5f435"
+            },
+            "high_sierra": {
+              "url": "https://homebrew.bintray.com/bottles/terraform-0.12.19.high_sierra.bottle.tar.gz",
+              "sha256": "bf6ebda1beb2dc91e5ec6e607456ce1c0789dfe102d25e879856dfd5938eb3dd"
+            }
+          }
+        }
       }
     },
     "cask": {
@@ -263,7 +305,7 @@
         "version": "2.1.2"
       },
       "alacritty": {
-        "version": "0.4.0"
+        "version": "0.4.1"
       },
       "google-chrome": {
         "version": "73.0.3683.75"
@@ -285,12 +327,12 @@
   "system": {
     "macos": {
       "catalina": {
-        "HOMEBREW_VERSION": "2.2.0",
+        "HOMEBREW_VERSION": "2.2.2",
         "HOMEBREW_PREFIX": "/usr/local",
-        "Homebrew/homebrew-core": "70ee7daeb9b6c8c82eee6edb2204a88f9b174820",
+        "Homebrew/homebrew-core": "f2463cbba086689c872cddd3a8bc242976a603ff",
         "CLT": "",
         "Xcode": "10.1",
-        "macOS": "10.15.1"
+        "macOS": "10.15.2"
       }
     }
   }

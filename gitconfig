@@ -1,3 +1,5 @@
 [user]
 	name = Jim Denton
-	email = denton.jim@gmail.com
+	email = jim@blinker.com
+[url "git@github.com:"]
+	insteadOf = https://github.com/

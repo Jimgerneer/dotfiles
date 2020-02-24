@@ -12,8 +12,9 @@ call plug#begin('~/.vim/pluggers')
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Plug 'francoiscabrol/ranger.vim'       "File manager
-  Plug 'junegunn/fzf.vim'                "Fuzzy wuzzy was a finder
+  Plug 'francoiscabrol/ranger.vim'       " File manager
+  Plug 'rbgrouleff/bclose.vim'           " Required by Ranger
+  Plug 'junegunn/fzf.vim'                " Fuzzy wuzzy was a finder
   Plug '/usr/local/opt/fzf'              " You'll have to install fzf if you don't have it, but I really recommend it,
                                          " it's super fast and very useful for a ton of different things
                                          " on mac $ brew install fzf
@@ -50,6 +51,7 @@ call plug#begin('~/.vim/pluggers')
   Plug 'tpope/vim-surround'              " Surround text with text
   Plug 'tpope/vim-commentary'            " All Hail Tpope
   Plug 'michaeljsmith/vim-indent-object' " Another default vscode vim plugin for indentation levels as text objects
+  Plug 'AndrewRadev/sideways.vim'
   " Plug 'tpope/vim-endwise'
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ GIT GUD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,9 +165,22 @@ endif
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if &runtimepath =~ 'ranger'
+  let g:ranger_map_keys = 0
+  nnoremap <Leader>f :Ranger<CR>
+
   let g:ranger_replace_netrw = 1
   let g:ranger_command_override = 'ranger --cmd "set show_hidden=true"'
+  " let g:ranger_on_exit = 'bw!'
 endif
+
+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SIDEWAYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+nnoremap <c-h> :SidewaysLeft<cr>
+nnoremap <c-l> :SidewaysRight<cr>
+omap aa <Plug>SidewaysArgumentTextobjA
+xmap aa <Plug>SidewaysArgumentTextobjA
+omap ia <Plug>SidewaysArgumentTextobjI
+xmap ia <Plug>SidewaysArgumentTextobjI
 
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RICE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
