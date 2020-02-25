@@ -1,0 +1,25 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+      force: true
+ 
+- clean: ['~']
+
+- shell:
+    - [git submodule init]
+    - [git submodule update --init --recursive, Installing submodules]
+
+- link:
+    ~/.zshrc: zshrc
+    ~/.eslintrc: eslintrc.json
+    ~/.prettierrc: prettierrc.js
+    ~/.tmux.conf: tmux.conf
+    ~/.vimrc: vimrc
+    ~/.config/:
+      glob: true
+      path: config/*
+      create: true
+    ~/.vim: 
+      glob: true
+      path: vim/*
