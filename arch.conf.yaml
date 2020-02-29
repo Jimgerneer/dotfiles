@@ -1,0 +1,20 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+      force: true
+
+- link:
+    ~/.npmrc: npmrc
+
+- shell:
+#     - command: pacman -S --needed --noconfirm - < pkglist.txt
+#       description: Installing packages with YAY
+#       stdin: true
+#       stdout: true
+#       stderr: true
+
+    -
+      command: bash ./scripts/npm_installations.sh
+      description: Setting up npm packages
+

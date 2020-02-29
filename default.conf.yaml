@@ -16,6 +16,9 @@
     ~/.prettierrc: prettierrc.js
     ~/.tmux.conf: tmux.conf
     ~/.vimrc: vimrc
+    ~/.gitconfig: git/.gitconfig
+    ~/.gitconfig-default: git/.gitconfig-default
+    ~/.gitconfig-work: git/.gitconfig-work
     ~/.config/:
       glob: true
       path: config/*
