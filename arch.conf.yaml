@@ -6,6 +6,10 @@
 
 - link:
     ~/.npmrc: npmrc
+    ~/.config/:
+      glob: true
+      path: arch-config/*
+      create: true
 
 - shell:
 #     - command: pacman -S --needed --noconfirm - < pkglist.txt
