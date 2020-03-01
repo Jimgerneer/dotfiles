@@ -1,5 +1,7 @@
 [includeIf "gitdir:~/Code/"]
   path = .gitconfig-default
+[includeIf "gitdir:~/.dotfiles/"]
+  path = .gitconfig-default
 [includeIf "gitdir:~/Code/work/"]
   path = .gitconfig-work
 [url "git@github.com:"]

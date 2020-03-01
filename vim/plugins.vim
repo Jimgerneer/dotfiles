@@ -52,6 +52,7 @@ call plug#begin('~/.vim/pluggers')
   Plug 'tpope/vim-commentary'            " All Hail Tpope
   Plug 'michaeljsmith/vim-indent-object' " Another default vscode vim plugin for indentation levels as text objects
   Plug 'AndrewRadev/sideways.vim'
+  Plug 'frazrepo/vim-rainbow'
   " Plug 'tpope/vim-endwise'
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ GIT GUD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,7 +116,7 @@ if &runtimepath =~ 'coc'
   endfunction
   nnoremap <silent> gh :call CocAction('doHover')<Cr>
   nmap <leader>rn <Plug>(coc-rename)
-  nmap <silent> gy <Plug>(coc-type-definition)
+  nmap <silent> gt <Plug>(coc-type-definition)
   let g:coc_global_extensions = ['coc-json', 'coc-vimlsp', 'coc-rls',
   \'coc-marketplace', 'coc-elixir', 'coc-tsserver', 'coc-eslint',
   \'coc-prettier']
@@ -181,6 +182,12 @@ omap aa <Plug>SidewaysArgumentTextobjA
 xmap aa <Plug>SidewaysArgumentTextobjA
 omap ia <Plug>SidewaysArgumentTextobjI
 xmap ia <Plug>SidewaysArgumentTextobjI
+
+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RAINBOW ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if &runtimepath =~ 'rainbow'
+  let g:rainbow_active = 1
+end
 
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RICE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
