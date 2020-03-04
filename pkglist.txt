@@ -6,6 +6,7 @@ fzf
 fd
 nodenv
 neovim
+nerd-fonts-complete
 npm
 oh-my-zsh-git
 otf-fira-code
