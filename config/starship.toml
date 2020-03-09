@@ -1,4 +1,4 @@
 add_newline = false
 
-[character]
-symbol = "➧"
+[line-break]
+disabled = true
