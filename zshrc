@@ -122,10 +122,11 @@ bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
 # }}} End configuration added by Zim install
 
+# is this needed?
 # Force language
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-export LC_CTYPE=en.US.UTF-8
+# export LANG=en_US.UTF-8
+# export LC_ALL=en_US.UTF-8
+# export LC_CTYPE=en.US.UTF-8
 
 # Lines configured by zsh-newuser-install
 HISTFILE=~/.histfile
@@ -138,8 +139,7 @@ bindkey -v
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
 
-#TODO make this dynamic
-zstyle :compinstall filename '/home/test/.zshrc'
+zstyle :compinstall filename '$HOME/.zshrc'
 
 autoload -Uz compinit
 compinit
