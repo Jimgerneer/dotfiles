@@ -1,0 +1,98 @@
+;==========================================================
+;
+;
+;   ██████╗  ██████╗ ██╗  ██╗   ██╗██████╗  █████╗ ██████╗
+;   ██╔══██╗██╔═══██╗██║  ╚██╗ ██╔╝██╔══██╗██╔══██╗██╔══██╗
+;   ██████╔╝██║   ██║██║   ╚████╔╝ ██████╔╝███████║██████╔╝
+;   ██╔═══╝ ██║   ██║██║    ╚██╔╝  ██╔══██╗██╔══██║██╔══██╗
+;   ██║     ╚██████╔╝███████╗██║   ██████╔╝██║  ██║██║  ██║
+;   ╚═╝      ╚═════╝ ╚══════╝╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+;
+;
+;   To learn more about how to configure Polybar
+;   go to https://github.com/polybar/polybar
+;
+;   The README contains a lot of information
+;
+;==========================================================
+
+[color]
+white = #FFFFFF
+red = #e53935
+light_green = #28bd6b
+dunno = #5c889c
+shade1 = #0f111a
+bground = #0f111a
+fground = #f7f7f7
+accent = #31323a
+modulefg = #f7f7f7
+modulefg-alt = #f7f7f7
+
+[bar/main]
+monitor = DP-4
+
+dpi = 192
+width = 100%
+height = 22
+include-file = ~/.config/polybar/fullbar
+background = ${color.bground}
+foreground = ${color.fground}
+overline-size = 0
+overline-color = ${color.accent}
+modules-left = workspaces title
+modules-center =
+modules-right = volume date
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; sound, time
+
+[module/volume]
+type = internal/alsa
+format-volume =| <ramp-volume> <label-volume>
+format-muted = 0%
+ramp-volume-0 =
+ramp-volume-1 =
+ramp-volume-2 =
+
+[module/eth]
+type = internal/network
+interface =enp7s0
+format-connected =<label-connected>
+label-connected-foreground = ${color.dunno}
+label-connected ="| "
+format-disconnected =<label-disconnected>
+label-disconnected =not connected
+
+[module/date]
+type = internal/date
+time = %H:%M
+time-alt = %a %d %b
+label ="| %time% "
+
+
+[module/title]
+type = internal/xwindow
+format = <label>
+format-padding = 1
+label = " %title%"
+label-maxlen = 30
+label-empty = " Arch Linux"
+
+
+[module/workspaces]
+type = internal/bspwm
+pin-workspaces = false
+enable-click = true
+enable-scroll = true
+format = <label-state>
+format-background = ${color.shade1}
+format-foreground = ${color.shade1}
+label-monitor = %name%
+label-focused-foreground = ${color.dunno}
+label-occupied-foreground = ${color.accent}
+label-urgent-foreground = ${color.red}
+label-empty-foreground = ${color.modulefg-alt}
+label-focused-padding = 1
+label-urgent-padding = 1
+label-occupied-padding = 1
+label-empty-padding = 1

@@ -4,16 +4,16 @@ let mapleader = " "
 nnoremap ; :
 
 " Easier window motions
-nnoremap <Leader>wj <C-W><C-J>
-nnoremap <Leader>wk <C-W><C-K>
-nnoremap <Leader>wl <C-W><C-L>
-nnoremap <Leader>wh <C-W><C-H>
+nnoremap <Leader>j <C-W><C-J>
+nnoremap <Leader>k <C-W><C-K>
+nnoremap <Leader>l <C-W><C-L>
+nnoremap <Leader>h <C-W><C-H>
 
 " I usually prefer the arrow keys
-nnoremap <Leader>wJ <C-W>J
-nnoremap <Leader>wK <C-W>K
-nnoremap <Leader>wH <C-W>H
-nnoremap <Leader>wL <C-W>L
+nnoremap <Leader>J <C-W>J
+nnoremap <Leader>K <C-W>K
+nnoremap <Leader>H <C-W>H
+nnoremap <Leader>L <C-W>L
 
 " We don't need no stinkin arrows
 nnoremap <Up> :res +5<Cr>

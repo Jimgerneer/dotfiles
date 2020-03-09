@@ -6,11 +6,13 @@ fzf
 fd
 nodenv
 neovim
+nerd-fonts-complete
 npm
 oh-my-zsh-git
 otf-fira-code
 ripgrep
 ranger
+starship
 teamspeak3
 the_silver_searcher
 tmux
