@@ -11,6 +11,7 @@
     - [git submodule update --init --recursive, Installing submodules]
 
 - link:
+    ~/.bashrc: bashrc
     ~/.zshrc: zshrc
     ~/.eslintrc: eslintrc.json
     ~/.prettierrc: prettierrc.js
