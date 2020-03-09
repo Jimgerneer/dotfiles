@@ -46,10 +46,10 @@ function dev
     cd Code
     git clone $argv
     cd (echo $argv | awk -F "/" '{print $NF}' | sed 's/\.git//')
-    bash ~/.dotfiles/dev_tmux.sh
+    bash ~/.dotfiles/scripts/dev_tmux.sh
   else if set destination (fd -t d | fzf --preview 'tree -aCt {}' --reverse --margin=7%)
     cd $destination
-    bash ~/.dotfiles/dev_tmux.sh
+    bash ~/.dotfiles/scripts/dev_tmux.sh
   end
   cd $ol_dir
 end

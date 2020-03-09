@@ -158,12 +158,12 @@ function dev() {
     cd Code
     git clone "$1"
     cd $(echo "$1" | awk -F "/" '{print $NF}' | sed 's/\.git//')
-    bash ~/.dotfiles/dev_tmux.sh
+    bash ~/.dotfiles/scripts/dev_tmux.sh
   elif export destination=$( fd --hidden -t d | fzf --preview 'tree -aCt {}' --reverse --margin=5%)
   then
     cd $destination
     echo $destination
-    bash ~/.dotfiles/dev_tmux.sh
+    bash ~/.dotfiles/scripts/dev_tmux.sh
   fi
   cd $ol_dir
 }

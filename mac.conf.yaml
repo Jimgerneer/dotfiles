@@ -1,6 +1,6 @@
 - shell:
     - [brew bundle, Installing Homebrew formulas from Brewfile]
-    - [sh pre-install.sh, Running --mac-- pre installation script]
+    - [sh ./scripts/pre-install.sh, Running --mac-- pre installation script]
     -
       command: bash ./scripts/npm_installations.sh
       description: Setting up npm packages

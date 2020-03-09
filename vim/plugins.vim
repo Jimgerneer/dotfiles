@@ -19,9 +19,6 @@ call plug#begin('~/.vim/pluggers')
                                          " it's super fast and very useful for a ton of different things
                                          " on mac $ brew install fzf
 
-  "Plug '~/.fzf'                         " on ubuntu $ sudo apt-get install fzf
-                                         " on anything else using git $ git clone --depth 1
-
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ MAGIC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   Plug 'neoclide/coc.nvim', {'branch': 'release'}
