@@ -54,4 +54,6 @@ function dev
   cd $ol_dir
 end
 
+alias work='kitty +kitten ssh jim@192.168.1.78'
+
 eval (starship init fish)
