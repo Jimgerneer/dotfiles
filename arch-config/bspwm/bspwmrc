@@ -4,33 +4,68 @@
 
 sh $HOME/.config/screenlayout/screens.sh
 
-sxhkd &
+# Workspaces
+bspc monitor HDMI-0 -d 1 2 3
+bspc monitor DP-4 -d 4 5 6
+bspc monitor DP-2 -d 7 8 9 10
+ 
+# Window Settings
 
-. "${HOME}/.cache/wal/colors.sh"
+bspc config border_width 	        0
+bspc config window_gap            15
 
-bspc HDMI-0 -d IV V VI
-bspc DP-4 -d I II III
-bspc DP-2 -d  VII VIII IX X
+# Colors 
+bspc config focused_border_color  "#191919"
+bspc config normal_border_color   "#191919"
+bspc config presel_feedback_color "#4C4C4C"
 
-bspc config border_width         2
-bspc config window_gap          12
+bspc config split_ratio           0.5
+bspc config borderless_monocle    true
+bspc config gapless_monocle       true
 
-bspc config split_ratio          0.52
-bspc config borderless_monocle   true
-bspc config gapless_monocle      true
 bspc config focus_follows_pointer true
 
-bspc config normal_border_color "$color3"
-bspc config active_border_color "$color3"
-bspc config focused_border_color "$color3"
-bspc config presel_feedback_color "$color3"
+### Window Rules ###
 
-bspc rule -a brave desktop='^2' state=floating
+bspc rule -a Slack monitor=HDMI-0
+bspc rule -a discord monitor=HDMI-0
+bspc rule -a Thunderbird monitor=HDMI-0 desktop=2 state=fullscreen
+bspc rule -a "Zoom Group Chat" state=floating
+bspc rule -a dunst monitor=HDMI-0
 
-xrdb merge $HOME/.Xresources
+### Autostart Apps ###
 
-feh --bg-fill $/HOME/.rsrc/wall.jpeg
+# Key Daemon
+sxhkd &
 
-sh $HOME/.config/polybar/launch.sh
+# Polybar
+~/.config/polybar/launch.sh &
 
-picom
+# Restore Xresources
+xrdb -load ~/.Xresources &
+
+# Background
+nitrogen --restore &
+
+# Notifications
+dunst &
+
+# Compositor
+picom &
+
+# Network Manager
+# nm-applet &
+
+# Handles cursor problem
+xsetroot -cursor_name left_ptr &
+
+# Load Bitmap Fonts
+# xset +fp ~/.local/share/fonts &
+# xset fp rehash &
+# xset fp+ /usr/share/fonts/bitmap &
+
+# App startups
+~/.scripts/startup/workapps.sh &
+
+# xrdb merge $HOME/.Xresources
+
