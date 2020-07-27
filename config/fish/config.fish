@@ -3,6 +3,7 @@ set -Ux TERM "xterm-256color"
 set -Ux EDITOR nvim
 set -Ux VISUAL nvim
 
+alias eltest='fswatch lib/ test/ | mix test --listen-on-stdin'
 if type -q exa
   alias la='exa -la'
   alias ls='exa -la'
@@ -31,6 +32,10 @@ if type -q fzf
   alias fm='fzf | xargs rm -rfi'
 end
 
+if type -q dmux
+  alias malibu='dmux ~/Code/malibu/ -P "javascript"'
+end
+
 if type -q npm
   set fish_user_paths (npm bin)
 end
@@ -53,5 +58,7 @@ function dev
   end
   cd $ol_dir
 end
+
+status --is-interactive; and source (anyenv init -|psub)
 
 eval (starship init fish)
