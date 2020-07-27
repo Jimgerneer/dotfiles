@@ -9,5 +9,5 @@ call SourceFile("~/.vim/mappings.vim")
 call SourceFile("~/.vim/plugins.vim")
 
 if has('nvim')
- call SourceFile("~/.vim/settings/nvim_settings.vim")
+ call SourceFile("~/.vim/nvim_settings.vim")
 endif

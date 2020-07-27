@@ -32,6 +32,12 @@ call plug#begin('~/.vim/pluggers')
   Plug 'ianks/vim-tsx'
   Plug 'pangloss/vim-javascript'
 
+  "~~~~~~~~~~~~~~~~~~~~~~~~~~~ NOTES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Plug 'vimwiki/vimwiki', {'branch': 'dev'}
+  Plug 'michal-h21/vim-zettel'
+  Plug 'alok/notational-fzf-vim'
+
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ STATUS BAR ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   Plug 'vim-airline/vim-airline'         " Uncomment if you want a status bar
@@ -45,11 +51,12 @@ call plug#begin('~/.vim/pluggers')
 
   Plug 'Raimondi/delimitMate'            " autocompletion of closing tags
   Plug 'Yggdroot/indentLine'             " Display Indentation
-  Plug 'tpope/vim-surround'              " Surround text with text
+  Plug 'machakann/vim-sandwich'          " Surround text with text
   Plug 'tpope/vim-commentary'            " All Hail Tpope
   Plug 'michaeljsmith/vim-indent-object' " Another default vscode vim plugin for indentation levels as text objects
   Plug 'AndrewRadev/sideways.vim'
   Plug 'frazrepo/vim-rainbow'
+  Plug 'tpope/vim-abolish'
   " Plug 'tpope/vim-endwise'
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ GIT GUD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,14 +103,15 @@ if &runtimepath =~ 'coc'
       \ <SID>check_back_space() ? "\<TAB>" :
       \ coc#refresh()
   inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-  inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+  inoremap <expr> <cr> pumvisible() ? coc#_select_confirm() : "\<C-g>u\<CR>"
 
   function! s:check_back_space() abort
     let col = col('.') - 1
     return !col || getline('.')[col - 1]  =~# '\s'
   endfunction
 
-  let g:coc_snippet_next = '<tab>'
+  let g:coc_snippet_next = '<C-j>'
+  let g:coc_snippet_previous = '<C-k>'
   function! s:show_documentation()
     if (index(['vim','help'], &filetype) >= 0)
       execute 'h '.expand('<cword>')
@@ -114,6 +122,7 @@ if &runtimepath =~ 'coc'
   nnoremap <silent> gh :call CocAction('doHover')<Cr>
   nmap <leader>rn <Plug>(coc-rename)
   nmap <silent> gt <Plug>(coc-type-definition)
+  nmap <silent> <Leader>L <Plug>(coc-codelens-action)
   let g:coc_global_extensions = ['coc-json', 'coc-vimlsp', 'coc-rls',
   \'coc-marketplace', 'coc-elixir', 'coc-tsserver', 'coc-eslint',
   \'coc-prettier']
@@ -180,12 +189,33 @@ xmap aa <Plug>SidewaysArgumentTextobjA
 omap ia <Plug>SidewaysArgumentTextobjI
 xmap ia <Plug>SidewaysArgumentTextobjI
 
+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SANDWICH ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if &runtimepath =~ 'sandwich'
+  runtime macros/sandwich/keymap/surround.vim
+endif
+
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RAINBOW ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if &runtimepath =~ 'rainbow'
   let g:rainbow_active = 1
 end
 
+"~~~~~~~~~~~~~~~~~~~~~~~~~~~ NOTES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if &runtimepath =~ 'vimwiki'
+  let g:vimwiki_list = [{ 'path': '~/Documents/notes/',
+       \ 'syntax':'markdown', 'ext': '.md' }]
+  set nocompatible
+  filetype plugin on
+  autocmd FileType vimwiki set ft=markdown
+end
+
+if &runtimepath =~ 'vim-zettel'
+  let g:zettel_format = "%y%m%d-%H%M-%title"
+  let g:zettel_options = [{"template" :  "~/Documents/notes/zettel-template.tpl"}]
+  let g:nv_search_paths = ['~/Documents/notes']
+end
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RICE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if &runtimepath =~ 'vim-deus'
