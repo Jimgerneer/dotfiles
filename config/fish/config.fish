@@ -32,11 +32,18 @@ if type -q fzf
 end
 
 if type -q npm
-  set fish_user_paths (npm bin)
+  /* this might not work on mac */
+  set fish_user_paths (npm config get prefix)/bin
 end
 
 function fco -d "Fuzzy-find and checkout a branch"
   git branch --all | grep -v HEAD | string trim | fzf | read -l result; and git checkout "$result"
+end
+
+function pragprog
+  fswatch -l 5 -o ~/Code/t5/runtime/**/* | while read
+    make -f ../Makefile all || true
+  end
 end
 
 function dev
@@ -55,5 +62,6 @@ function dev
 end
 
 alias work='kitty +kitten ssh jim@192.168.1.78'
+
 
 eval (starship init fish)

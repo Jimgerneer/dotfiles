@@ -32,6 +32,10 @@ bspc rule -a discord monitor=HDMI-0
 bspc rule -a Thunderbird monitor=HDMI-0 desktop=2 state=fullscreen
 bspc rule -a "Zoom Group Chat" state=floating
 bspc rule -a dunst monitor=HDMI-0
+bspc rule -a Virt-manager desktop=6
+bspc rule -a Synergy desktop=6
+bspc rule -a looking-glass-client desktop=5 state=fullscreen
+bspc rule -a conky desktop=3 state=fullscreen
 
 ### Autostart Apps ###
 
@@ -66,6 +70,7 @@ xsetroot -cursor_name left_ptr &
 
 # App startups
 ~/.scripts/startup/workapps.sh &
+xscreensaver -no-splash &
 
 # xrdb merge $HOME/.Xresources
 
