@@ -204,8 +204,8 @@ end
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~ NOTES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if &runtimepath =~ 'vimwiki'
-  let g:vimwiki_list = [{ 'path': '~/Documents/notes/',
-       \ 'syntax':'markdown', 'ext': '.md' }]
+  let g:vimwiki_list = [{ 'path': '~/Documents/notes/', 'syntax':'markdown', 'ext': '.md' }, 
+       \{ 'path': '~/Documents/zettel/', 'syntax':'markdown', 'ext': '.md' }]
   set nocompatible
   filetype plugin on
   autocmd FileType vimwiki set ft=markdown
@@ -213,8 +213,9 @@ end
 
 if &runtimepath =~ 'vim-zettel'
   let g:zettel_format = "%y%m%d-%H%M-%title"
-  let g:zettel_options = [{"template" :  "~/Documents/notes/zettel-template.tpl"}]
-  let g:nv_search_paths = ['~/Documents/notes']
+  let g:zettel_options = [{}, {"template" :  "~/Documents/notes/zettel-template.tpl"}]
+  let g:nv_search_paths = ['~/Documents/zettel/']
+  nnoremap <leader>zn :ZettelNew<space>
 end
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RICE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
