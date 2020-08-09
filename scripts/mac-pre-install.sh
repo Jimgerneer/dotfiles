@@ -10,20 +10,20 @@ else
 fi
 brew tap homebrew/bundle  # Install Homebrew Bundle
 
-# Check if oh-my-zsh is installed
-OMZDIR="$HOME/.oh-my-zsh"
+# Check if Zim is installed for zshell
+OMZDIR="$HOME/.zim"
 if [ ! -d "$OMZDIR" ]; then
-  echo 'Installing oh-my-zsh'
-  /bin/sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+  echo 'Installing zim' 
+  /bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh)"
 else
-  echo 'Updating oh-my-zsh'
-  upgrade_oh_my_zsh
+  echo 'Zim already installed'
 fi
 
-# Change default shell
-if [! $0 = "-zsh"]; then
-  echo 'Changing default shell to zsh'
-  chsh -s /bin/zsh
+# Change default shell to bash and setup fish
+if [ ! $0 = "-bash" ]; then
+  echo 'Changing default shell to bash'
+  echo "/usr/local/bin/fish" | sudo tee -a /etc/shells
+  chsh -s `which bash`
 else
-  echo 'Already using zsh'
+  echo 'Already using fish'
 fi

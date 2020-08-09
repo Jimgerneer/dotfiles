@@ -3,6 +3,7 @@ set -Ux TERM "xterm-256color"
 set -Ux EDITOR nvim
 set -Ux VISUAL nvim
 
+alias eltest='fswatch lib/ test/ | mix test --listen-on-stdin'
 if type -q exa
   alias la='exa -la'
   alias ls='exa -la'
@@ -29,6 +30,10 @@ end
 
 if type -q fzf
   alias fm='fzf | xargs rm -rfi'
+end
+
+if type -q dmux
+  alias malibu='dmux ~/Code/malibu/ -P "javascript"'
 end
 
 if type -q npm
@@ -62,6 +67,8 @@ function dev
 end
 
 alias work='kitty +kitten ssh jim@192.168.1.78'
+
+status --is-interactive; and source (anyenv init -|psub)
 
 
 eval (starship init fish)
