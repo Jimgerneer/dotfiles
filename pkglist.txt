@@ -1,5 +1,6 @@
 alacritty
 brave
+calibre
 elm-platform-bin
 exa
 fzf
