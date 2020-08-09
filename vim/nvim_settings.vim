@@ -1,4 +1,4 @@
-set termguicolors
+" set termguicolors
 set lazyredraw                        " macros do not have to redraw the screen
 
 nnoremap <leader>t<Leader>l      :vsplit +terminal<cr>

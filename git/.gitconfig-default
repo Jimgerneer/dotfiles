@@ -1,3 +1,5 @@
 [user]
 	name = Jim Denton
 	email = denton.jim@gmail.com
+[settings]
+  ignorecase = false 

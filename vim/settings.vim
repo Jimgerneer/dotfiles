@@ -71,6 +71,4 @@ set fillchars=vert:%
 
 set noequalalways
 
-" I'm tryring this out mostly for end conditions in macros, but also, like,
-" I'm a big kid and can search backward on my own.
 " set nowrapscan
