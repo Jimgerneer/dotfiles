@@ -40,7 +40,9 @@ call plug#begin('~/.vim/pluggers')
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ STATUS BAR ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Plug 'vim-airline/vim-airline'         " Uncomment if you want a status bar
+  Plug 'vim-airline/vim-airline'
+  Plug 'vim-airline/vim-airline-themes'
+  " Plug 'itchyny/lightline.vim'
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ THEME ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -226,3 +228,65 @@ if &runtimepath =~ 'vim-deus'
   endif
 endif
 
+if &runtimepath =~ 'vim-airline-themes'
+  let g:airline_theme='deus'
+
+  set noshowmode
+end
+
+if &runtimepath =~ 'lightline'
+
+  function! GitBranch()
+    return system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
+  endfunction
+
+  augroup LightLineStuff
+    autocmd!
+    autocmd FocusGained * let g:light_line_git_branch = GitBranch()
+
+  augroup END
+
+  function! LightlineGitGutter()
+    let [ l:added, l:modified, l:removed ] = GitGutterGetHunkSummary()
+    return printf('+%d ~%d -%d', l:added, l:modified, l:removed)
+  endfunction
+
+  function! GetGitBranch()
+    if exists('g:light_line_git_branch')
+      return g:light_line_git_branch
+    else
+      ''
+    endif
+  endfunction
+
+  function! LightlineFilename()
+    let root = fnamemodify(get(b:, 'git_dir'), ':h')
+    let path = expand('%:p')
+    if path[:len(root)-1] ==# root
+      return path[len(root)+1:]
+    endif
+    return expand('%')
+  endfunction
+
+  function! LightlineReadonly()
+    return &readonly && &filetype !=# 'help' ? 'RO' : ''
+  endfunction
+
+  let g:lightline = {
+    \ 'colorscheme': 'wombat',
+    \ 'active': {
+    \   'left': [ ['mode', 'paste'], [ 'githunks', 'readonly'] ],
+    \   'right': [ [ 'lineinfo' ], [ 'percent' ],  ['filename', 'filetype'] ]
+    \   },
+    \ 'component_function': {
+    \   'githunks': 'LightlineGitGutter',
+    \   'filename': 'LightlineFilename',
+    \   'readonly': 'LightlineReadonly',
+    \   },
+    \ 'component': {
+    \   'filename': '%<%{LightLineFilename()}',
+    \   },
+    \ }
+
+  set noshowmode
+end
