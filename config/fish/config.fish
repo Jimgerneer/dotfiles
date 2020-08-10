@@ -1,5 +1,4 @@
 set -Ux FZF_DEFAULT_COMMAND "fd --hidden --type f"
-set -Ux TERM "xterm-256color"
 set -Ux EDITOR nvim
 set -Ux VISUAL nvim
 
@@ -37,7 +36,6 @@ if type -q dmux
 end
 
 if type -q npm
-  /* this might not work on mac */
   set fish_user_paths (npm config get prefix)/bin
 end
 
@@ -67,8 +65,5 @@ function dev
 end
 
 alias work='kitty +kitten ssh jim@192.168.1.78'
-
-status --is-interactive; and source (anyenv init -|psub)
-
 
 eval (starship init fish)

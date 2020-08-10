@@ -6,10 +6,18 @@
 
 - link:
     ~/.npmrc: npmrc
-    ~/.config/:
+    ~/.config/fish/*:
+      path: config/fish/*
       glob: true
-      path: arch-config/*
       create: true
+    ~/.config/fish/fish_variables:
+      path: arch-config/fish/fish_variables
+      relink: true
+      create: true
+    # ~/.config/:
+    #   glob: true
+    #   path: arch-config/*
+    #   create: true
 
 - shell:
 #     - command: pacman -S --needed --noconfirm - < pkglist.txt
