@@ -67,7 +67,7 @@ set smartcase
 set scrolloff=10
 " endif
 
-set fillchars=vert:%
+set fillchars=vert:║
 
 set noequalalways
 

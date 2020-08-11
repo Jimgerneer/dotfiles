@@ -40,9 +40,10 @@ call plug#begin('~/.vim/pluggers')
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ STATUS BAR ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Plug 'vim-airline/vim-airline'
-  Plug 'vim-airline/vim-airline-themes'
-  " Plug 'itchyny/lightline.vim'
+  " Plug 'vim-airline/vim-airline'
+  " Plug 'vim-airline/vim-airline-themes'
+  Plug 'itchyny/lightline.vim'
+  Plug 'ryanoasis/vim-devicons'
 
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~ THEME ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -259,34 +260,28 @@ if &runtimepath =~ 'lightline'
     endif
   endfunction
 
-  function! LightlineFilename()
-    let root = fnamemodify(get(b:, 'git_dir'), ':h')
-    let path = expand('%:p')
-    if path[:len(root)-1] ==# root
-      return path[len(root)+1:]
-    endif
-    return expand('%')
-  endfunction
-
   function! LightlineReadonly()
     return &readonly && &filetype !=# 'help' ? 'RO' : ''
   endfunction
 
+  function! FileNameWithIcon() abort
+    return winwidth(0) > 70  ?  WebDevIconsGetFileTypeSymbol() . ' ' . expand('%:t') : '' 
+  endfunction
+
   let g:lightline = {
-    \ 'colorscheme': 'wombat',
+    \ 'colorscheme': 'deus',
     \ 'active': {
     \   'left': [ ['mode', 'paste'], [ 'githunks', 'readonly'] ],
-    \   'right': [ [ 'lineinfo' ], [ 'percent' ],  ['filename', 'filetype'] ]
+    \   'right': [ [ 'lineinfo' ], [ 'percent' ],  ['filename_with_icon'] ]
     \   },
     \ 'component_function': {
     \   'githunks': 'LightlineGitGutter',
-    \   'filename': 'LightlineFilename',
     \   'readonly': 'LightlineReadonly',
-    \   },
-    \ 'component': {
-    \   'filename': '%<%{LightLineFilename()}',
+    \   'filename_with_icon': 'FileNameWithIcon',
     \   },
     \ }
+
+  let g:lightline.separator = { 'left': "", 'right': "" }
 
   set noshowmode
 end
