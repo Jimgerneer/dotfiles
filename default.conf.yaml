@@ -20,10 +20,9 @@
     ~/.gitconfig: git/.gitconfig
     ~/.gitconfig-default: git/.gitconfig-default
     ~/.gitconfig-work: git/.gitconfig-work
-    ~/.config/:
-      glob: true
-      path: config/*
-      create: true
     ~/.vim: 
       glob: true
       path: vim/*
+    ~/.config/:
+      glob: true
+      path: config/*
