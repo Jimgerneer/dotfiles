@@ -6,14 +6,21 @@
 
 - link:
     ~/.npmrc: npmrc
-    ~/.config/fish/*:
-      path: config/fish/*
+    ~/.config/fish/completions/:
+      path: config/fish/completions/*
       glob: true
       create: true
-    ~/.config/fish/fish_variables:
-      path: arch-config/fish/fish_variables
-      relink: true
+    ~/.config/fish/functions/:
+      path: config/fish/functions/*
+      glob: true
       create: true
+    ~/.config/fish/conf.d/:
+      path: config/fish/conf.d/*
+      glob: true
+      create: true
+    ~/.config/fish/config.fish: config/fish/config.fish
+    ~/.config/fish/fishfile: config/fish/fishfile
+    ~/.config/fish/fish_variables: arch-config/fish/fish_variables
     # ~/.config/:
     #   glob: true
     #   path: arch-config/*

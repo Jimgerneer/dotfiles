@@ -29,7 +29,7 @@ bspc config focus_follows_pointer true
 
 bspc rule -a Slack monitor=HDMI-0
 bspc rule -a discord monitor=HDMI-0
-bspc rule -a Thunderbird monitor=HDMI-0 desktop=2 state=fullscreen
+bspc rule -a Thunderbird monitor=HDMI-0 desktop=2
 bspc rule -a "Zoom Group Chat" state=floating
 bspc rule -a dunst monitor=HDMI-0
 bspc rule -a Virt-manager desktop=6
