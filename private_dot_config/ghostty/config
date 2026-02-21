@@ -1,0 +1,17 @@
+# Theme
+theme = Gruvbox Dark
+
+# Font
+# font-family-bold = "PragmataPro Mono Liga Bold"
+# font-family-italic = "PragmataProp Mono Liga Italic"
+# font-family-bold-italic = "PragmataProp Mono Liga Bold Italic"
+font-family = "PragmataPro Mono Liga"
+font-feature = "on"
+font-size = 16
+
+adjust-cursor-thickness = 3
+adjust-underline-position = 3
+bold-is-bright = true
+link-url = true
+mouse-hide-while-typing = true
+macos-titlebar-proxy-icon = hidden
