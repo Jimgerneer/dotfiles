@@ -141,7 +141,9 @@ return {
 	{
     "pmizio/typescript-tools.nvim",
     dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
-    opts = {},
+    opts = {
+      on_attach = common_on_attach,
+    },
   },
   {
     "dnlhc/glance.nvim",

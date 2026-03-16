@@ -16,6 +16,10 @@ map("n", "<Leader>wK", "<C-W>K", { silent = true, desc = "Move window up" })
 map("n", "<Leader>wJ", "<C-W>J", { silent = true, desc = "Move window down" })
 map("n", "<Leader>wH", "<C-W>H", { silent = true, desc = "Move window left" })
 
+map("n", "<Leader>e", vim.diagnostic.open_float, { silent = true, desc = "Show diagnostic float" })
+map("n", "]d", vim.diagnostic.goto_next, { silent = true, desc = "Next diagnostic" })
+map("n", "[d", vim.diagnostic.goto_prev, { silent = true, desc = "Previous diagnostic" })
+
 require("settings")
 
 require("config.lazy")

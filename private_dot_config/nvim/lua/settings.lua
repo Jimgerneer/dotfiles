@@ -35,7 +35,7 @@ vim.opt.shell = "bash"
 vim.opt.shiftround = true
 vim.opt.shiftwidth = 2
 vim.opt.showmode = false
-vim.opt.signcolumn = "auto:1"
+vim.opt.signcolumn = "yes:1"
 vim.opt.smartcase = true
 vim.opt.smartindent = true
 vim.opt.smarttab = true
@@ -52,6 +52,16 @@ vim.opt.wildmenu = true
 vim.opt.wrap = false
 vim.opt.cmdheight = 0
 
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = "markdown",
+	callback = function()
+		vim.opt_local.wrap = true
+		vim.opt_local.linebreak = true
+	end,
+})
+
+vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "#2d1117" })
+
 vim.diagnostic.config({
 	header = false,
 	float = {
@@ -59,7 +69,17 @@ vim.diagnostic.config({
 		border = "rounded",
 	},
 	severity_sort = true,
-	signs = false,
+	signs = {
+		text = {
+			[vim.diagnostic.severity.ERROR] = "✘",
+			[vim.diagnostic.severity.WARN] = "▲",
+			[vim.diagnostic.severity.INFO] = "●",
+			[vim.diagnostic.severity.HINT] = "◆",
+		},
+		linehl = {
+			[vim.diagnostic.severity.ERROR] = "DiagnosticLineError",
+		},
+	},
 	underline = true,
 	update_in_insert = false,
 	virtual_text = true,
