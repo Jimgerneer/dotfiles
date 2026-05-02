@@ -5,7 +5,10 @@ return {
 		event = { "BufReadPost", "BufNewFile", "VeryLazy" },
 		cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
 		dependencies = {
-			"JoosepAlviste/nvim-ts-context-commentstring",
+			{
+				"JoosepAlviste/nvim-ts-context-commentstring",
+				opts = { enable_autocmd = false },
+			},
 			{ "nushell/tree-sitter-nu" },
 		},
 		opts = {
@@ -24,9 +27,6 @@ return {
 					-- Set to false if you have an `updatetime` of ~100.
 					clear_on_cursor_move = true,
 				},
-			},
-			context_commentstring = {
-				enable = true,
 			},
 			ensure_installed = {
 				"bash",

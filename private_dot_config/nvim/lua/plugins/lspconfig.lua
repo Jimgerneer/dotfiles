@@ -5,119 +5,122 @@ function PeekDefinition()
 	return vim.lsp.buf_request(0, "textDocument/definition", params, preview_location_callback)
 end
 
-function common_on_attach(client, bufnr)
+-- Replaces per-server on_attach with a global LspAttach autocmd
+vim.api.nvim_create_autocmd("LspAttach", {
+	group = lspConfigAuGroup,
+	callback = function(args)
+		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		local bufnr = args.buf
+		if not client then
+			return
+		end
 
-	vim.api.nvim_clear_autocmds({ buffer = bufnr, group = lspConfigAuGroup })
+		-- Per-server overrides
+		if client.name == "nil_ls" then
+			client.server_capabilities.documentFormattingProvider = false
+		end
 
-	vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-		callback = function()
-			require("nvim-lightbulb").update_lightbulb({
-				sign = {
-					enabled = false,
-				},
-				virtual_text = {
-					enabled = true,
-					-- Text to show at virtual text
-					text = "",
-					-- highlight mode to use for virtual text (replace, combine, blend), see :help nvim_buf_set_extmark() for reference
-					hl_mode = "combine",
-				},
+		vim.api.nvim_clear_autocmds({ buffer = bufnr, group = lspConfigAuGroup })
+
+		vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+			callback = function()
+				require("nvim-lightbulb").update_lightbulb({
+					sign = {
+						enabled = false,
+					},
+					virtual_text = {
+						enabled = true,
+						text = "",
+						hl_mode = "combine",
+					},
+				})
+			end,
+			buffer = bufnr,
+			group = lspConfigAuGroup,
+		})
+
+		local function buf_set_option(name, value)
+			vim.api.nvim_set_option_value(name, value, { buf = bufnr })
+		end
+
+		local opts = { silent = false, buffer = bufnr }
+
+		buf_set_option("omnifunc", "v:lua.vim.lsp.omnifunc")
+
+		vim.keymap.set({ "i", "s" }, "<c-l>", vim.lsp.buf.signature_help, opts)
+		vim.keymap.set("n", "gl", vim.lsp.buf.signature_help, opts)
+		vim.keymap.set("n", "gr", "<cmd>Glance references<CR>", opts)
+		vim.keymap.set({ "x", "n" }, "<leader>ca", vim.lsp.buf.code_action, opts)
+		vim.keymap.set("n", "gd", "<cmd>Glance definitions<CR>", opts)
+		vim.keymap.set("n", "gt", "<cmd>Glance type_definitions<CR>", opts)
+		vim.keymap.set("n", "gi", "<cmd>Glance implementations<CR>", opts)
+		vim.keymap.set("n", "<Leader>rn", vim.lsp.buf.rename, opts)
+		vim.keymap.set("n", "gh", vim.lsp.buf.hover, opts)
+
+		if client.server_capabilities.codeLensProvider then
+			vim.keymap.set("n", "<Leader>cl", vim.lsp.codelens.run, opts)
+			vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "InsertLeave" }, {
+				buffer = bufnr,
+				callback = function()
+					vim.lsp.codelens.refresh({ bufnr = bufnr })
+				end,
+				group = lspConfigAuGroup,
 			})
-		end,
-		buffer = bufnr,
-		group = lspConfigAuGroup,
-	})
+		end
 
-	local function buf_set_option(name, value)
-		vim.api.nvim_set_option_value(name, value, { buf = bufnr })
-	end
+		if client.server_capabilities.documentFormattingProvider then
+			vim.keymap.set("n", "<leader>gq", vim.lsp.buf.format, opts)
+			vim.api.nvim_create_autocmd({ "BufWritePre" }, {
+				buffer = bufnr,
+				callback = function()
+					if vim.g.format_on_save then
+						vim.lsp.buf.format()
+					end
+				end,
+				group = lspConfigAuGroup,
+			})
+		end
+	end,
+})
 
-	local opts = { silent = false, buffer = bufnr }
-
-	buf_set_option("omnifunc", "v:lua.vim.lsp.omnifunc")
-
-	vim.keymap.set({ "i", "s" }, "<c-l>", vim.lsp.buf.signature_help, opts)
-	vim.keymap.set("n", "gl", vim.lsp.buf.signature_help, opts)
-	vim.keymap.set("n", "gr", "<cmd>Glance references<CR>", opts)
-	vim.keymap.set({ "x", "n" }, "<leader>ca", vim.lsp.buf.code_action, opts)
-	vim.keymap.set("n", "gd", "<cmd>Glance definitions<CR>", opts)
-	vim.keymap.set("n", "gt", "<cmd>Glance type_definitions<CR>", opts)
-	vim.keymap.set("n", "gi", "<cmd>Glance implementations<CR>", opts)
-	vim.keymap.set("n", "<Leader>rn", vim.lsp.buf.rename, opts)
-  vim.keymap.set("n", "gh", vim.lsp.buf.hover, opts)
-
-	if client.server_capabilities.codeLensProvider then
-		vim.keymap.set("n", "<Leader>cl", vim.lsp.codelens.run, opts)
-		vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "InsertLeave" }, {
-			buffer = bufnr,
-			callback = function()
-				vim.lsp.codelens.refresh({ bufnr = bufnr })
-			end,
-			group = lspConfigAuGroup,
-		})
-	end
-
-	if client.server_capabilities.documentFormattingProvider then
-		vim.keymap.set("n", "<leader>gq", vim.lsp.buf.format, opts)
-		vim.api.nvim_create_autocmd({ "BufWritePre" }, {
-			buffer = bufnr,
-			callback = function()
-				if vim.g.format_on_save then
-					vim.lsp.buf.format()
-				end
-			end,
-			group = lspConfigAuGroup,
-		})
-	end
-end
-
-local function setup_lspconfig()
+local function setup_lsp()
 	require("fidget").setup()
 
-	vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded" })
-	vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
-		vim.lsp.handlers.signature_help,
-		{ border = "rounded", close_events = { "CursorMoved", "BufHidden" } }
-	)
+	-- Handler overrides (replaces deprecated vim.lsp.with)
+	vim.lsp.handlers["textDocument/hover"] = function(err, result, ctx, config)
+		config = config or {}
+		config.border = "rounded"
+		vim.lsp.handlers.hover(err, result, ctx, config)
+	end
 
-	local lspconfig = require("lspconfig")
+	vim.lsp.handlers["textDocument/signatureHelp"] = function(err, result, ctx, config)
+		config = config or {}
+		config.border = "rounded"
+		config.close_events = { "CursorMoved", "BufHidden" }
+		vim.lsp.handlers.signature_help(err, result, ctx, config)
+	end
 
-	lspconfig.solargraph.setup({
-		on_attach = common_on_attach,
-		capabilities = capabilities,
-	})
-	lspconfig.nushell.setup({
-		on_attach = function(client, bufnr)
-			-- client.server_capabilities.documentFormattingProvider = false
-			common_on_attach(client, bufnr)
-		end,
-		capabilities = capabilities,
-	})
-	lspconfig.nil_ls.setup({
-		on_attach = function(client, bufnr)
-			client.server_capabilities.documentFormattingProvider = false
-			common_on_attach(client, bufnr)
-		end,
-		capabilities = capabilities,
-	})
-	lspconfig.gdscript.setup({
-		on_attach = common_on_attach,
+	-- Shared capabilities from cmp-nvim-lsp (was previously undefined/nil)
+	local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+	-- Apply shared capabilities to all servers
+	vim.lsp.config("*", {
 		capabilities = capabilities,
 	})
 
-	lspconfig.ocamllsp.setup({
-		on_attach = common_on_attach,
-		capabilities = capabilities,
-	})
+	-- Server-specific configs
+	vim.lsp.config("solargraph", {})
+	vim.lsp.config("nushell", {})
+	vim.lsp.config("nil_ls", {})
+	vim.lsp.config("gdscript", {})
+	vim.lsp.config("ocamllsp", {})
+	vim.lsp.config("marksman", {})
 
-	lspconfig.marksman.setup({
-		on_attach = common_on_attach,
-		capabilities = capabilities,
-	})
+	vim.lsp.enable({ "solargraph", "nushell", "nil_ls", "gdscript", "ocamllsp", "marksman" })
 end
 
 return {
-  {
+	{
 		"neovim/nvim-lspconfig",
 		event = "BufReadPre",
 		dependencies = {
@@ -136,63 +139,58 @@ return {
 			"j-hui/fidget.nvim",
 			"kosayoda/nvim-lightbulb",
 		},
-		config = setup_lspconfig,
+		config = setup_lsp,
 	},
 	{
-    "pmizio/typescript-tools.nvim",
-    dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
-    opts = {
-      on_attach = common_on_attach,
-    },
-  },
-  {
-    "dnlhc/glance.nvim",
-    cmd = "Glance",
-    keys = {
-      { "gpd", "<cmd>Glance definitions<CR>" },
-      { "gpr", "<cmd>Glance references<CR>" },
-      { "gpt", "<cmd>Glance type_definitions<CR>" },
-      { "gpi", "<cmd>Glance implementations<CR>" },
-    },
-    opts = function()
-      local actions = require("glance").actions
-      return {
-        theme = { -- This feature might not work properly in nvim-0.7.2
-          -- enable = true, -- Will generate colors for the plugin based on your current colorscheme
-          -- mode = "brighten", -- 'brighten'|'darken'|'auto', 'auto' will set mode based on the brightness of your colorscheme
-        },
-        list = {
-          position = "left", -- Position of the list window 'left'|'right'
-          width = 0.33, -- 33% width relative to the active window, min 0.1, max 0.5
-        },
-        detached = function(winid)
-          return vim.api.nvim_win_get_width(winid) < 100
-        end,
-        folds = {
-          fold_closed = "󰅂", -- 󰅂 
-          fold_open = "󰅀", -- 󰅀 
-          folded = false,
-        },
-        border = {
-          enable = true, -- Show window borders. Only horizontal borders allowed
-          top_char = "―",
-          bottom_char = "―",
-        },
-        mappings = {
-          list = {
-            ["<C-u>"] = actions.preview_scroll_win(5),
-            ["<C-d>"] = actions.preview_scroll_win(-5),
-            ["<C-l>"] = actions.jump_vsplit,
-            ["<C-j>"] = actions.jump_split,
-            ["st"] = actions.jump_tab,
-            ["p"] = actions.enter_win("preview"),
-          },
-          preview = {
-            ["q"] = actions.close,
-            ["p"] = actions.enter_win("list"),
-          },
-        },
-      }
-    end,
-  },
+		"pmizio/typescript-tools.nvim",
+		dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
+		opts = {},
+	},
+	{
+		"dnlhc/glance.nvim",
+		cmd = "Glance",
+		keys = {
+			{ "gpd", "<cmd>Glance definitions<CR>" },
+			{ "gpr", "<cmd>Glance references<CR>" },
+			{ "gpt", "<cmd>Glance type_definitions<CR>" },
+			{ "gpi", "<cmd>Glance implementations<CR>" },
+		},
+		opts = function()
+			local actions = require("glance").actions
+			return {
+				theme = {},
+				list = {
+					position = "left",
+					width = 0.33,
+				},
+				detached = function(winid)
+					return vim.api.nvim_win_get_width(winid) < 100
+				end,
+				folds = {
+					fold_closed = "󰅂",
+					fold_open = "󰅀",
+					folded = false,
+				},
+				border = {
+					enable = true,
+					top_char = "―",
+					bottom_char = "―",
+				},
+				mappings = {
+					list = {
+						["<C-u>"] = actions.preview_scroll_win(5),
+						["<C-d>"] = actions.preview_scroll_win(-5),
+						["<C-l>"] = actions.jump_vsplit,
+						["<C-j>"] = actions.jump_split,
+						["st"] = actions.jump_tab,
+						["p"] = actions.enter_win("preview"),
+					},
+					preview = {
+						["q"] = actions.close,
+						["p"] = actions.enter_win("list"),
+					},
+				},
+			}
+		end,
+	},
 }
