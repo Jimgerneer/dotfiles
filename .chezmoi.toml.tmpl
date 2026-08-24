@@ -1,0 +1,14 @@
+{{/*
+Per-machine appearance. Prompted once on `chezmoi init` and stored in
+~/.config/chezmoi/chezmoi.toml, which is machine-local and NOT in this repo.
+To change later: edit that file, or re-run `chezmoi init` after deleting the key.
+Defaults below are the work-machine values.
+*/}}
+{{- $fontSize     := promptIntOnce    . "fontSize"     "Terminal font size"   16 -}}
+{{- $ghosttyTheme := promptStringOnce . "ghosttyTheme" "Ghostty theme"        "Gruvbox Dark" -}}
+{{- $zellijTheme  := promptStringOnce . "zellijTheme"  "Zellij theme"         "gruvbox-dark" -}}
+
+[data]
+    fontSize = {{ $fontSize }}
+    ghosttyTheme = {{ $ghosttyTheme | quote }}
+    zellijTheme = {{ $zellijTheme | quote }}
