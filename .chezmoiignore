@@ -2,3 +2,10 @@
 *.pem
 *.key
 .env.*
+.claude/agents/monthly-report.md
+
+# Claude Code writes these itself (plugins, marketplaces, peon-ping hooks);
+# peon-ping is a per-machine brew install. Managed here = constant drift.
+.claude/settings.json
+.claude/skills/peon-ping-*
+.claude/hooks
