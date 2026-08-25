@@ -1,0 +1,29 @@
+# restic exclusions for tinos.
+#
+# restic does NOT expand ~ -- absolute paths only. The version in
+# phase-0-preflight.md used ~/.cache, which silently matches nothing.
+
+# --- build artefacts and caches: regenerable, and enormous ---
+**/node_modules
+**/.venv
+**/.direnv
+**/__pycache__
+**/.cache
+/home/decoy/.cache
+
+# --- reinstallable, not worth versioning ---
+/home/decoy/.local/share/Steam/steamapps
+/home/decoy/.local/share/containers
+/home/decoy/.cache/yay
+
+# --- unreviewed. 1.3 GB named "tempStuff"; see phase-0 Step 3.
+#     Remove this line once it has been skimmed and kept deliberately.
+/home/decoy/Code/tempStuff
+
+# --- never recurse into the backup target or other mounts ---
+/mnt
+
+# --- transient ---
+/home/decoy/.local/share/Trash
+**/*.tmp
+**/*.part
