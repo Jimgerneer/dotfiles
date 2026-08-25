@@ -1,0 +1,142 @@
+# Starship prompt — shared across macOS and Linux.
+#
+# Cross-shell on purpose: the login shell here is /bin/bash while the
+# interactive shell is fish, so a fish-native prompt (tide, hydro) would leave
+# bash bare. One config, every shell, both machines.
+#
+# PERFORMANCE: the main lever for starship is *how many modules run*, not the
+# renderer. Every module below is either cheap or explicitly disabled. If the
+# prompt ever feels slow in a large repo, measure before changing anything:
+#     starship timings
+#
+# Symbols assume a Nerd Font (nerd-fonts-complete is installed on tinos;
+# PragmataPro Nerd Font on the Mac). If a symbol renders as a box, that is the
+# font, not starship.
+
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$nodejs\
+$rust\
+$python\
+$docker_context\
+$cmd_duration\
+$line_break\
+$character"""
+
+# Prompt renders immediately rather than waiting on a slow module.
+scan_timeout = 30
+command_timeout = 500
+add_newline = true
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+style = "bold cyan"
+read_only = " 󰌾"
+# Keep long video/NAS paths readable rather than truncating to nothing.
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"~/Documents/arch-rebuild" = "󰣇 rebuild"
+"~/Code" = " Code"
+"/mnt/nas" = "󰛧 nas"
+
+[git_branch]
+symbol = " "
+style = "bold purple"
+truncation_length = 24
+truncation_symbol = "…"
+
+[git_status]
+style = "bold red"
+# Compact: counts rather than repeated glyphs.
+conflicted = "="
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?${count}"
+stashed = "$"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
+
+[cmd_duration]
+# Long-running things here are real: ffmpeg transcodes, Resolve renders,
+# pacman -Syu, restic backups. Worth always knowing how long they took.
+min_time = 2_000
+format = "took [$duration]($style) "
+style = "bold yellow"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"
+
+[nodejs]
+symbol = " "
+style = "bold green"
+# Only in projects that actually are Node -- not in every directory.
+detect_files = ["package.json", ".node-version", ".nvmrc"]
+detect_folders = ["node_modules"]
+
+[rust]
+symbol = " "
+style = "bold red"
+
+[python]
+symbol = " "
+style = "bold yellow"
+# Showing the venv name matters more than the interpreter version.
+format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
+
+[docker_context]
+symbol = " "
+# Noise in every directory containing a compose file; only show a non-default context.
+only_with_files = false
+disabled = false
+
+[hostname]
+# Only when it matters -- i.e. over SSH.
+ssh_only = true
+format = "[$ssh_symbol$hostname]($style) "
+style = "bold dimmed green"
+
+[username]
+show_always = false
+format = "[$user]($style)@"
+style_user = "bold dimmed yellow"
+
+# --- Explicitly disabled: cost without value on these machines ---------------
+# Each of these either shells out, hits the network, or fires in directories
+# where it is meaningless. Re-enable individually if a project needs it.
+[package]
+disabled = true
+
+[aws]
+disabled = true
+
+[gcloud]
+disabled = true
+
+[kubernetes]
+disabled = true
+
+[battery]
+disabled = true      # tinos is a desktop; harmless but pointless on the laptop too
+
+[java]
+disabled = true      # jre11-openjdk exists only for DaVinci Resolve
+
+[golang]
+disabled = true
+
+[php]
+disabled = true
+
+[ruby]
+disabled = true
