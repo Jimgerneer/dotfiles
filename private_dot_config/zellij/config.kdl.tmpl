@@ -1,6 +1,11 @@
 options {
     session_serialization true
     pane_viewport_serialization true // Optional: for more complete state
+
+    // New panes open fish rather than $SHELL. Deliberately the bare name, not
+    // an absolute path: zellij resolves it via PATH, so this works unchanged on
+    // Arch (/usr/bin/fish) and macOS (/opt/homebrew/bin/fish).
+    default_shell "fish"
 }
 // If you'd like to override the default keybindings completely, be sure to change "keybinds" to "keybinds clear-defaults=true"
 keybinds {
