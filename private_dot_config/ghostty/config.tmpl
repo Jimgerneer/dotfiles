@@ -15,3 +15,10 @@ bold-is-bright = true
 link-url = true
 mouse-hide-while-typing = true
 macos-titlebar-proxy-icon = hidden
+
+{{/* fish is /usr/bin/fish on Arch and /opt/homebrew/bin/fish on macOS, so
+     resolve it per machine rather than hardcoding. Omitted entirely if fish
+     is not installed, in which case ghostty falls back to $SHELL. */}}
+{{- if lookPath "fish" }}
+command = {{ lookPath "fish" }}
+{{- end }}
