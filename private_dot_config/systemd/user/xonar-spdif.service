@@ -1,0 +1,31 @@
+[Unit]
+# Put the Xonar's two output stages into a known, mutually-exclusive state at
+# login, matching whatever default sink WirePlumber restored.
+#
+# WHY THIS EXISTS
+# The card feeds its S/PDIF transmitter from the analog playback stream when
+# the dedicated S/PDIF PCM is idle, so if both output stages are enabled the
+# desk speakers play whatever the headphones do. WirePlumber restores the
+# default sink but knows nothing about those stages, so left alone the machine
+# can boot with both live. `audio-out apply` reconciles them.
+#
+# It also replaces the older approach of unconditionally forcing
+# `IEC958 Playback Switch` on -- that turned out to be what CAUSED the
+# mirroring rather than fixing anything.
+#
+# Ordered After= WirePlumber because the mixer state must be applied after the
+# sound server has finished claiming the card, not before -- alsactl and udev
+# both lose that race.
+Description=Set Xonar output stages to a known exclusive state
+After=wireplumber.service
+PartOf=wireplumber.service
+ConditionPathExists=/proc/asound/STX
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/sleep 2
+ExecStart=%h/.local/bin/audio-out apply
+
+[Install]
+WantedBy=wireplumber.service

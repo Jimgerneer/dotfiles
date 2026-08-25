@@ -9,3 +9,25 @@
 .claude/settings.json
 .claude/skills/peon-ping-*
 .claude/hooks
+
+# ---------------------------------------------------------------------------
+# tinos-only (the Arch desktop). Phase 1 audio: every one of these names
+# hardware that exists ONLY on tinos -- an ASUS Xonar Essence STX and a RODE
+# AI-1. Elsewhere they would create sinks for a sound card that is not there,
+# a filter chain pinned to a missing capture device, and a systemd unit that
+# cannot succeed.
+#   ~/Documents/arch-rebuild/phase-1-audio-map.md   -- what these do
+#   ~/Documents/arch-rebuild/phase-1-audio.md       -- why they are as they are
+# Also: the DaVinci Resolve launcher + .desktop override (paths under
+# /opt/resolve), and sxhkdrc (bspwm bindings calling the audio scripts).
+{{ if ne .chezmoi.hostname "tinos" }}
+.config/pipewire
+.config/wireplumber
+.config/systemd/user/xonar-spdif.service
+.config/sxhkd
+.local/bin/audio-out
+.local/bin/mic-level
+.local/bin/mic-test
+.local/bin/resolve
+.local/share/applications/DaVinciResolve.desktop
+{{ end }}

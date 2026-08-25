@@ -1,0 +1,38 @@
+[Desktop Entry]
+# USER OVERRIDE of /usr/share/applications/DaVinciResolve.desktop
+#
+# WHY THIS EXISTS
+# The packaged entry runs /opt/resolve/bin/resolve DIRECTLY, bypassing
+# ~/.local/bin/resolve entirely. Anything launched from rofi, a file manager or
+# a MIME association therefore got NONE of the wrapper's environment:
+#
+#   QT_QPA_PLATFORM=xcb   Resolve bundles Qt 5.15 with NO Wayland QPA plugin.
+#                         Without this pin it will break outright under a
+#                         Wayland session -- the Phase 4 compositor work.
+#   GDK_BACKEND=x11       same reason.
+#   PIPEWIRE_NODE         pins CAPTURE to the raw microphone, bypassing the
+#                         "Mic (Processed)" chain. Fairlight's tools are better
+#                         and non-destructive; the chain's gate and RNNoise are
+#                         irreversible.
+#
+# Found 2026-08-24: a running Resolve had none of these set, while
+# `which resolve` correctly pointed at the wrapper -- because it had been
+# started from the launcher, not a shell.
+#
+# ~/.local/share/applications takes precedence over /usr/share/applications,
+# and unlike the packaged file this one survives a Resolve upgrade.
+#
+# Keep StartupWMClass=resolve so bspwm still matches the window.
+Version=1.0
+Type=Application
+Name=DaVinci Resolve
+GenericName=DaVinci Resolve
+Comment=Revolutionary new tools for editing, visual effects, color correction and professional audio post production, all in a single application!
+Path=/opt/resolve/
+Exec=/home/decoy/.local/bin/resolve %u
+Terminal=false
+MimeType=application/x-resolveproj;
+Icon=davinci-resolve
+StartupNotify=true
+Name[en_US]=DaVinci Resolve
+StartupWMClass=resolve

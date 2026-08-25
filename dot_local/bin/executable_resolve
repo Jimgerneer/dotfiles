@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# DaVinci Resolve Studio launcher.
+#
+# Resolve bundles its own Qt 5.15 with NO Wayland QPA plugin, so it must be
+# pinned to xcb. A global QT_QPA_PLATFORM=wayland will break it outright.
+#
+# If it ever dies with:
+#   undefined symbol: _ZNSt3__117bad_function_callD1Ev
+#     -> sudo rm -f /opt/resolve/libs/libc++.so.1 /opt/resolve/libs/libc++abi.so.1
+#   undefined symbol: g_string_free_and_steal
+#     -> add: LD_PRELOAD=/usr/lib/libglib-2.0.so
+
+# PIPEWIRE_NODE pins Resolve's CAPTURE to the RAW microphone, bypassing the
+# "Mic (Processed)" filter chain that every other application gets.
+#
+# WHY: the chain (gate, RNNoise, compressor, de-esser) is for real-time
+# conversation, where there is no second pass. It is the wrong thing for
+# anything you will edit -- Fairlight's own tools are better AND
+# non-destructive, whereas gating and RNNoise are irreversible: once something
+# is judged to be noise it is gone for good.
+#
+# WHY IT IS SAFE FOR PLAYBACK: the variable names a SOURCE. PipeWire ignores it
+# for playback streams and falls back to the default sink, so Resolve's output
+# still follows `audio-out` between headphones and speakers. Verified
+# 2026-08-24: capture linked to the raw AI-1, playback linked to the normal
+# default sink, exit 0.
+#
+# WHY NOT other mechanisms, both tried and rejected:
+#   - WirePlumber `stream.rules` + `update-props` + `target.object` CANNOT
+#     define a target. state-stream.lua applies those rules to a local copy of
+#     the properties used for the state key and restore decisions, and never
+#     writes them back to the node. A matching stream still came up with
+#     `target.object: None`.
+#   - An ALSA `pcm.!default` override via ALSA_CONFIG_PATH with `capture_node`
+#     set. `capture_node` genuinely works on a NAMED pcm, but the `!default`
+#     override would not take precedence over
+#     /usr/share/alsa/alsa.conf.d/99-pipewire-default.conf.
+#
+# If the node name ever changes (a different interface, or the AI-1 enumerating
+# differently), find it with:  pactl list short sources | grep -v monitor
+RAW_MIC="alsa_input.usb-RODE_Microphones_RODE_AI-1_31F091A4-00.mono-fallback"
+
+exec env QT_QPA_PLATFORM=xcb GDK_BACKEND=x11 PIPEWIRE_NODE="$RAW_MIC" \
+     /opt/resolve/bin/resolve "$@"
