@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# Generate a Chromium theme extension from the active palette.
+#
+# Brave and Chrome use the SAME theme format, so this builds one unpacked
+# extension that both load. It is generated rather than templated directly
+# because Chromium wants colours as [r,g,b] integer arrays and chezmoi's Go
+# templates have no hex->decimal conversion; doing it here in python is far
+# less awkward than encoding RGB triples a second time in palettes.toml.
+#
+# WHY NOT JUST TURN ON "USE GTK THEME"?
+# You can, and it needs no extension -- Settings -> Appearance -> "Use GTK
+# theme" makes the browser follow the GTK3 theme this repo already sets, and
+# it then tracks palette switches with no further work. Two reasons to prefer
+# the extension anyway:
+#   1. GTK mode themes the frame and toolbar but NOT the new-tab page, which
+#      is the largest surface you actually look at.
+#   2. Chromium *derives* its colours from GTK rather than using them
+#      literally, so the result is approximate. The extension is exact.
+# Both routes are fine. This gives you the exact one; the toggle is there if
+# you would rather have zero moving parts.
+#
+# THIS SCRIPT DOES NOT INSTALL THE THEME. Chromium stores the active theme in
+# Secure Preferences, which is HMAC-signed -- writing it from outside makes
+# the browser detect tampering and reset the profile. So it writes the
+# extension to disk and you load it once, per browser. After that, switching
+# palettes rewrites it in place and the browser picks it up on next start.
+#
+# palette: {{ .theme }}
+{{- $p := index .palettes .theme }}
+
+set -euo pipefail
+command -v python3 >/dev/null || { echo "browser-theme: python3 missing, skipping"; exit 0; }
+
+python3 - <<'PY'
+import io, json, os
+
+OUT = os.path.expanduser("~/.local/share/tinos-browser-theme")
+THEME = "{{ .theme }}"
+
+P = dict(
+    bg0="{{ $p.bg0 }}", bg1="{{ $p.bg1 }}", bg2="{{ $p.bg2 }}",
+    bg3="{{ $p.bg3 }}", bg4="{{ $p.bg4 }}",
+    fg0="{{ $p.fg0 }}", fg1="{{ $p.fg1 }}", fg2="{{ $p.fg2 }}",
+    accent="{{ $p.accent }}", red="{{ $p.red }}",
+)
+
+def c(name):
+    h = P[name].lstrip("#")
+    return [int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)]
+
+manifest = {
+    "manifest_version": 3,
+    "version": "1.0.0",
+    "name": "tinos " + THEME,
+    "description": "Generated from .chezmoidata/palettes.toml. Do not hand-edit.",
+    "theme": {
+        "colors": {
+            # Frame: the strip behind the tabs. Darkest ground, so the active
+            # tab reads as lifted out of it.
+            "frame":                       c("bg0"),
+            "frame_inactive":              c("bg0"),
+            "frame_incognito":             c("bg0"),
+            "frame_incognito_inactive":    c("bg0"),
+            # Toolbar doubles as the active tab's fill.
+            "toolbar":                     c("bg2"),
+            "tab_text":                    c("fg0"),
+            "tab_background_text":         c("fg2"),
+            "bookmark_text":               c("fg1"),
+            "toolbar_button_icon":         c("fg1"),
+            "omnibox_background":          c("bg0"),
+            "omnibox_text":                c("fg1"),
+            # New-tab page -- the biggest surface, and the one GTK mode misses.
+            "ntp_background":              c("bg1"),
+            "ntp_text":                    c("fg1"),
+            "ntp_link":                    c("accent"),
+            "ntp_header":                  c("bg3"),
+            "button_background":           c("bg2"),
+        },
+        "properties": {
+            # Tells Chromium the NTP is dark, so it picks the light logo and
+            # light-on-dark text for elements it draws itself.
+            "ntp_logo_alternate": 1
+        },
+    },
+}
+
+os.makedirs(OUT, exist_ok=True)
+io.open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8").write(
+    json.dumps(manifest, indent=2) + "\n")
+print("browser-theme: %s  (palette %s)" % (OUT, THEME))
+PY

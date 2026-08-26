@@ -2,7 +2,19 @@
        the portal so it holds even when no desktop settings daemon is running. */ -}}
 [Settings]
 gtk-theme-name=Adwaita-dark
+{{ if stat "/usr/share/icons/Papirus-Dark" -}}
+{{- /* Papirus-Dark: muted, flat, built for dark UIs. Adwaita's mime icons are
+       bright and saturated, which is exactly what made Thunar glare against
+       the dark chrome. This line switches itself the moment the package is
+       installed -- no edit needed, just `chezmoi apply` again. */ -}}
+gtk-icon-theme-name=Papirus-Dark
+{{- else -}}
+{{- /* Papirus is not installed yet. Falling back to Adwaita rather than naming
+       a theme that is not there, which would drop GTK to hicolor and give you
+       missing-image placeholders instead of merely ugly icons.
+       Fix: sudo pacman -S papirus-icon-theme && chezmoi apply */ -}}
 gtk-icon-theme-name=Adwaita
+{{- end }}
 gtk-font-name=Inter 11
 gtk-application-prefer-dark-theme=1
 gtk-cursor-theme-name=Adwaita
