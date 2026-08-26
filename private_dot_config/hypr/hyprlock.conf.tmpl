@@ -1,0 +1,59 @@
+{{- $p := index .palettes .theme -}}
+# Lock screen — colours from the active palette ({{ .theme }}).
+# This is the half of the autologin trade-off that makes it safe: with no login
+# prompt at boot, this is the only thing between an idle desk and the session.
+
+general {
+    hide_cursor = true
+    ignore_empty_input = true
+    grace = 0                  # no grace period — grace defeats the point
+}
+
+background {
+    monitor =
+    path = {{ .chezmoi.homeDir }}/Pictures/wallpapers/forest-gloomy-5120x1440.jpg
+    blur_passes = 3
+    blur_size = 6
+    brightness = 0.55
+}
+
+input-field {
+    monitor =
+    size = 320, 52
+    outline_thickness = 2
+    dots_size = 0.28
+    dots_spacing = 0.3
+    dots_center = true
+    outer_color = rgb({{ $p.bg3 | replace "#" "" }})
+    inner_color = rgb({{ $p.bg1 | replace "#" "" }})
+    font_color  = rgb({{ $p.fg1 | replace "#" "" }})
+    check_color = rgb({{ $p.accent | replace "#" "" }})
+    fail_color  = rgb({{ $p.red | replace "#" "" }})
+    fail_text = "<i>$FAIL</i>"
+    placeholder_text = <i>password</i>
+    rounding = 8
+    position = 0, -80
+    halign = center
+    valign = center
+}
+
+label {
+    monitor =
+    text = cmd[update:1000] echo "$TIME"
+    color = rgb({{ $p.fg0 | replace "#" "" }})
+    font_size = 96
+    font_family = Inter Light
+    position = 0, 180
+    halign = center
+    valign = center
+}
+
+label {
+    monitor =
+    text = $DESC
+    color = rgb({{ $p.fg2 | replace "#" "" }})
+    font_size = 15
+    position = 0, 60
+    halign = center
+    valign = center
+}

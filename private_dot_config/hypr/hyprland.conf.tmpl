@@ -1,0 +1,226 @@
+{{- $p := index .palettes .theme -}}
+# Hyprland — tinos
+# Colours templated from .chezmoidata/palettes.toml (active: {{ .theme }}).
+# Keybinds deliberately mirror the old sxhkd/bspwm set so muscle memory carries.
+#
+# ⚠️ SYNTAX NOTE: this is Hyprland 0.56.2, where `windowrulev2` is DEPRECATED —
+# the binary says so itself. Everything below uses the unified `windowrule`.
+# Most guides still online use the v2 form; do not copy them in.
+
+# ── Monitor ──────────────────────────────────────────────────────────────────
+# Under Wayland the connector is DP-2 (kernel name), NOT DisplayPort-1 (the
+# X11/xrandr name). Same physical port, different naming scheme.
+#
+# 120 Hz, not 240: the panel currently only advertises 120 and 60 at
+# 5120x1440. That is a DSC negotiation problem, not a Hyprland one — see the
+# note at the bottom of this file.
+monitor = DP-2, 5120x1440@120, 0x0, 1
+monitor = , preferred, auto, 1          # anything else: sane default
+
+# ── Environment ──────────────────────────────────────────────────────────────
+env = XCURSOR_SIZE,24
+env = HYPRCURSOR_SIZE,24
+env = QT_QPA_PLATFORMTHEME,qt6ct
+# Force Qt/Firefox/Chromium to go native Wayland rather than XWayland.
+env = QT_QPA_PLATFORM,wayland;xcb
+env = MOZ_ENABLE_WAYLAND,1
+# No AQ_DRM_DEVICES. There is exactly one GPU (Navi 21 at pci 0000:32:00.0), so
+# Hyprland picks it unaided. Pinning it to /dev/dri/card1 would be worse than
+# useless: card numbering is assigned at probe time and can shift between
+# boots, so a hardcoded number is a config that boots to a black screen one
+# day for no visible reason. If a second GPU ever appears, pin it via the
+# STABLE name instead: /dev/dri/by-path/pci-0000:32:00.0-card
+
+# ── Look ─────────────────────────────────────────────────────────────────────
+general {
+    gaps_in = 7
+    gaps_out = 15                       # matches bspwm's window_gap 15
+    border_size = 2
+    # bspwm ran border_width 0 because its borders were ugly. Hyprland's are
+    # not, and a focused-window indicator is genuinely useful once windows
+    # float freely, so borders are on — but coloured from the palette.
+    col.active_border = rgb({{ $p.accent | replace "#" "" }})
+    col.inactive_border = rgb({{ $p.bg3 | replace "#" "" }})
+    layout = dwindle
+    allow_tearing = true                # required for the `immediate` game rule
+    resize_on_border = true             # grab any edge with the mouse
+}
+
+decoration {
+    rounding = 6
+    # No blur. It costs GPU every frame and this machine's GPU has better
+    # things to do during a Resolve render.
+    blur { enabled = false }
+    shadow { enabled = false }
+    active_opacity = 1.0
+    inactive_opacity = 1.0              # never dim — this is a colour-work box
+}
+
+animations {
+    enabled = true
+    bezier = snappy, 0.05, 0.9, 0.1, 1.0
+    animation = windows, 1, 3, snappy
+    animation = fade, 1, 3, snappy
+    animation = workspaces, 1, 3, snappy
+    animation = border, 1, 5, snappy
+}
+
+dwindle {
+    pseudotile = true
+    preserve_split = true
+}
+
+misc {
+    disable_hyprland_logo = true
+    disable_splash_rendering = true
+    force_default_wallpaper = 0
+    vfr = true                          # don't render frames nothing changed in
+    focus_on_activate = true
+}
+
+# ── Input ────────────────────────────────────────────────────────────────────
+input {
+    kb_layout = us
+    follow_mouse = 1                    # bspwm had focus_follows_pointer true
+    sensitivity = 0
+    accel_profile = flat                # no mouse acceleration
+    numlock_by_default = true
+}
+
+# ── Autostart ────────────────────────────────────────────────────────────────
+# uwsm puts these in app-graphical.slice, so a runaway one can be killed
+# without taking the session with it.
+exec-once = hyprpaper
+exec-once = /usr/lib/polkit-kde-authentication-agent-1
+exec-once = dunst
+exec-once = wl-paste --watch cliphist store
+exec-once = ~/.local/bin/audio-out apply
+
+$mod = SUPER
+$term = ghostty
+
+# ── Keybinds: launching ──────────────────────────────────────────────────────
+bind = $mod, Return, exec, $term
+bind = $mod, space, exec, ~/.config/rofi/launchers/launcher.sh
+bind = $mod, X, exec, ~/.config/rofi/power/powermenu.sh
+bind = $mod, V, exec, $term --class=wiremix -e wiremix
+bind = $mod, Escape, exec, hyprctl reload      # was: pkill -USR1 sxhkd
+bind = $mod ALT, Q, exit
+bind = $mod SHIFT, C, exec, cliphist list | rofi -dmenu | cliphist decode | wl-copy
+
+# ── Keybinds: window management ──────────────────────────────────────────────
+bind = $mod, W, killactive
+bind = $mod SHIFT, W, forcekillactive           # was: bspc node -k
+bind = $mod, F, fullscreen, 0
+bind = $mod, M, fullscreen, 1                   # ≈ bspwm monocle (keeps gaps/bar)
+bind = $mod, S, togglefloating
+bind = $mod, P, pseudo
+bind = $mod, Tab, workspace, previous
+
+# focus — vim keys, same as bspwm
+bind = $mod, H, movefocus, l
+bind = $mod, J, movefocus, d
+bind = $mod, K, movefocus, u
+bind = $mod, L, movefocus, r
+# swap
+bind = $mod SHIFT, H, movewindow, l
+bind = $mod SHIFT, J, movewindow, d
+bind = $mod SHIFT, K, movewindow, u
+bind = $mod SHIFT, L, movewindow, r
+
+# resize — held, repeats. Was super+alt+hjkl in bspwm.
+binde = $mod ALT, H, resizeactive, -40 0
+binde = $mod ALT, J, resizeactive, 0 40
+binde = $mod ALT, K, resizeactive, 0 -40
+binde = $mod ALT, L, resizeactive, 40 0
+
+# move a floating window — was super+arrows in bspwm
+binde = $mod, left,  moveactive, -40 0
+binde = $mod, down,  moveactive, 0 40
+binde = $mod, up,    moveactive, 0 -40
+binde = $mod, right, moveactive, 40 0
+
+# ── Mouse: drag to move and resize ───────────────────────────────────────────
+# This is built in — no script, no rule needed. Works on ANY window, tiled or
+# floating (dragging a tiled one pops it out).
+bindm = $mod, mouse:272, movewindow      # super + left-drag  = move
+bindm = $mod, mouse:273, resizewindow    # super + right-drag = resize
+
+# ── Centred-window presets ───────────────────────────────────────────────────
+# For games that handle 32:9 badly. There is no title bar to fight here —
+# Hyprland draws no server-side decorations at all, which is the Windows
+# annoyance gone by default. These just float + size + centre in one keystroke.
+#
+# 2560x1440 is a real mode the panel advertises, so a game set to that
+# internally will match the window exactly with no scaling.
+bind = $mod, G, exec, hyprctl --batch "dispatch setfloating active; dispatch resizeactive exact 2560 1440; dispatch centerwindow"
+bind = $mod SHIFT, G, exec, hyprctl --batch "dispatch setfloating active; dispatch resizeactive exact 3840 1080; dispatch centerwindow"
+bind = $mod CTRL, G, exec, hyprctl --batch "dispatch setfloating active; dispatch resizeactive exact 1920 1080; dispatch centerwindow"
+# ...and back to the tiling layout
+bind = $mod ALT, G, settiled, active
+
+# ── Workspaces ───────────────────────────────────────────────────────────────
+{{ range $i := until 10 }}{{ $n := add $i 1 }}{{ $key := mod $n 10 }}
+bind = $mod, {{ $key }}, workspace, {{ $n }}
+bind = $mod SHIFT, {{ $key }}, movetoworkspacesilent, {{ $n }}
+{{- end }}
+
+# ── Audio (Phase 1) ──────────────────────────────────────────────────────────
+# bindl = fires even when the session is locked, which is what you want for
+# media keys. -l 1.0 CAPS at 100%: without it wpctl boosts past unity into
+# software gain, which on the S/PDIF sink clips into the desk speakers with no
+# analog attenuator in the way.
+bindl = , XF86AudioRaiseVolume, exec, wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
+bindl = , XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindl = , XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bindl = , XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+bind = $mod, equal, exec, wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
+bind = $mod, minus, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bind = $mod SHIFT, M, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bind = $mod, A, exec, ~/.local/bin/audio-out toggle
+bind = $mod SHIFT, A, exec, ~/.local/bin/audio-out status
+
+# ── Screenshots ──────────────────────────────────────────────────────────────
+bind = , Print, exec, grim - | wl-copy
+bind = $mod, Print, exec, grim -g "$(slurp)" - | wl-copy
+bind = $mod SHIFT, P, exec, hyprpicker -a          # pick a colour to clipboard
+
+# ── Window rules ─────────────────────────────────────────────────────────────
+# Unified `windowrule` syntax (v2 is deprecated in 0.56).
+
+# Never let an idle-inhibiting app be dimmed out from under you.
+windowrule = idleinhibit fullscreen, class:.*
+
+# DaVinci Resolve: XWayland only (the launcher forces QT_QPA_PLATFORM=xcb),
+# and it must never be tiled — its floating panels break under a tiler.
+windowrule = float, class:^(resolve)$
+windowrule = noborder, class:^(resolve)$
+# 🛑 CRITICAL: hypridle measures INPUT idleness, not CPU. A three-hour render
+# with nobody touching the keyboard looks exactly like an idle machine, and the
+# 1800 s suspend would kill it. This inhibits idle whenever Resolve is open.
+windowrule = idleinhibit always, class:^(resolve)$
+
+# Games: float, no border, and allow tearing for latency. `immediate` needs
+# general:allow_tearing = true above.
+windowrule = float, class:^(steam_app_.*)$
+windowrule = immediate, class:^(steam_app_.*)$
+windowrule = noborder, class:^(steam_app_.*)$
+windowrule = center, class:^(steam_app_.*)$
+# Steam's own chrome should tile normally, so it is matched separately.
+windowrule = float, title:^(Friends List)$
+windowrule = float, title:^(Steam Settings)$
+
+# Picture-in-picture and dialogs float
+windowrule = float, title:^(Picture-in-Picture)$
+windowrule = pin, title:^(Picture-in-Picture)$
+windowrule = float, class:^(pavucontrol|wiremix|nm-connection-editor|blueman-manager)$
+windowrule = float, title:^(Open File|Save File|Save As|Open Folder)$
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OPEN: the panel runs at 120 Hz, not the 240 it is capable of. Only 120 and 60
+# are advertised at 5120x1440, which means DSC is not being negotiated. The
+# usual cause on an Odyssey G9 is the monitor's own OSD setting —
+# *Display Port Ver.* defaults to 1.2 on some firmware and must be set to 1.4
+# before DSC and 240 Hz are offered at all. Check the OSD before suspecting
+# the cable, the GPU or the compositor.
+# ─────────────────────────────────────────────────────────────────────────────

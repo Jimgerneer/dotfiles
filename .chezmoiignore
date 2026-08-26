@@ -42,6 +42,7 @@
 #   gtk-3.0  -- Thunar
 #   gtk-4.0  -- GTK4 dialogs
 #   rofi     -- launcher + power menu (its powermenu.sh calls bspc/systemctl)
+#   hypr     -- Hyprland, hyprpaper, hyprlock, hypridle
 # The TeamSpeak re-tint script guards itself at runtime (it exits quietly when
 # DarkenTS is not installed), so it does not need to be listed here.
 {{ if ne .chezmoi.os "linux" }}
@@ -49,4 +50,5 @@
 .config/gtk-3.0
 .config/gtk-4.0
 .config/rofi
+.config/hypr
 {{ end }}

@@ -1,0 +1,8 @@
+# Wallpaper. hyprpaper, NOT swww — swww is archived upstream and gone from the
+# AUR, which is the most common stale advice in Hyprland guides.
+{{ $wp := printf "%s/Pictures/wallpapers/forest-gloomy-5120x1440.jpg" .chezmoi.homeDir }}
+preload = {{ $wp }}
+wallpaper = DP-2,{{ $wp }}
+# The image is pre-cropped to exactly 5120x1440, so no scaling happens at all.
+splash = false
+ipc = on
