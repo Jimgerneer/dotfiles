@@ -11,10 +11,16 @@
 # Under Wayland the connector is DP-2 (kernel name), NOT DisplayPort-1 (the
 # X11/xrandr name). Same physical port, different naming scheme.
 #
-# 120 Hz, not 240: the panel currently only advertises 120 and 60 at
-# 5120x1440. That is a DSC negotiation problem, not a Hyprland one — see the
-# note at the bottom of this file.
-monitor = DP-2, 5120x1440@120, 0x0, 1
+# ✅ 240 Hz as of 2026-08-25. The panel was stuck advertising only 120/60
+# because the monitor's own OSD had *Display Port Ver.* set to 1.2; without
+# DP 1.4 there is no DSC, and without DSC there is not enough bandwidth for
+# 5120x1440 at 240. Nothing on the computer was at fault. Setting the OSD to
+# 1.4 made 239.76 the panel's PREFERRED mode immediately.
+#
+# The rate is written as 239.76 rather than 240 because that is the mode the
+# panel actually reports. Hyprland matches the nearest, so 240 would also work,
+# but the exact figure documents what is really being driven.
+monitor = DP-2, 5120x1440@239.76, 0x0, 1
 monitor = , preferred, auto, 1          # anything else: sane default
 
 # ── Environment ──────────────────────────────────────────────────────────────
@@ -76,6 +82,14 @@ misc {
     force_default_wallpaper = 0
     vfr = true                          # don't render frames nothing changed in
     focus_on_activate = true
+
+    # VRR / FreeSync. The G9 supports it and the GPU is AMD, so it is available
+    # — left OFF deliberately, not by omission.
+    #   1 = always on. Can cause visible brightness flicker on VA panels (which
+    #       this is) when the frame rate swings on a mostly-static desktop.
+    #   2 = fullscreen only. The gaming benefit, none of the desktop flicker.
+    # Try `vrr = 2` if you want it; revert if you see flicker in games.
+    vrr = 0
 }
 
 # ── Input ────────────────────────────────────────────────────────────────────
@@ -217,10 +231,9 @@ windowrule = float, class:^(pavucontrol|wiremix|nm-connection-editor|blueman-man
 windowrule = float, title:^(Open File|Save File|Save As|Open Folder)$
 
 # ─────────────────────────────────────────────────────────────────────────────
-# OPEN: the panel runs at 120 Hz, not the 240 it is capable of. Only 120 and 60
-# are advertised at 5120x1440, which means DSC is not being negotiated. The
-# usual cause on an Odyssey G9 is the monitor's own OSD setting —
-# *Display Port Ver.* defaults to 1.2 on some firmware and must be set to 1.4
-# before DSC and 240 Hz are offered at all. Check the OSD before suspecting
-# the cable, the GPU or the compositor.
+# ✅ RESOLVED 2026-08-25: the 120 Hz cap was the monitor's OSD *Display Port
+# Ver.* set to 1.2. Changed to 1.4 → DSC negotiates → 239.76 Hz offered and now
+# preferred. Worth remembering as a class of bug: the panel, not the computer,
+# decides what modes it advertises, so check the OSD before the cable, the GPU
+# or the compositor.
 # ─────────────────────────────────────────────────────────────────────────────
