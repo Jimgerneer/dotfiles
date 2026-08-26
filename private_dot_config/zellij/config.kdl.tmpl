@@ -1,12 +1,28 @@
-options {
-    session_serialization true
-    pane_viewport_serialization true // Optional: for more complete state
+// ── THESE MUST BE TOP-LEVEL. DO NOT WRAP THEM IN `options { }`. ─────────────
+// They used to live inside an `options { }` block. That is the pre-0.32 format,
+// and zellij's KDL parser IGNORES the unknown node SILENTLY -- `zellij setup
+// --check` still reports "[CONFIG FILE]: Well defined." while none of it
+// applies. The symptom was every new pane opening $SHELL (/bin/bash) instead of
+// fish, for as long as the wrapper was there.
+//
+// Confirmed against `zellij setup --dump-config`, which emits no `options {`
+// block at all and lists these at the top level.
+//
+// It is almost certainly also why zellij REWROTE this file on 2026-08-25,
+// backing the original up to config.kdl.bak.1 -- it regenerated a stale config.
 
-    // New panes open fish rather than $SHELL. Deliberately the bare name, not
-    // an absolute path: zellij resolves it via PATH, so this works unchanged on
-    // Arch (/usr/bin/fish) and macOS (/opt/homebrew/bin/fish).
-    default_shell "fish"
-}
+// New panes open fish rather than $SHELL. Deliberately the bare name, not an
+// absolute path: zellij resolves it via PATH, so this works unchanged on Arch
+// (/usr/bin/fish) and macOS (/opt/homebrew/bin/fish). Needed because the login
+// shell in /etc/passwd is /bin/bash -- fish is started by the terminal, so
+// $SHELL stays bash and zellij would inherit that.
+default_shell "fish"
+
+session_serialization true
+// Renamed in 0.45: this was `pane_viewport_serialization`, which is now a dead
+// key and silently does nothing.
+serialize_pane_viewport true
+
 // If you'd like to override the default keybindings completely, be sure to change "keybinds" to "keybinds clear-defaults=true"
 keybinds {
     normal {
