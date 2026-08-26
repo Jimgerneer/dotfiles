@@ -198,9 +198,30 @@ hl.bind(mod .. " + SHIFT + P", hl.dsp.exec_cmd("hyprpicker -a"))
 -- bar to fight: Hyprland draws no server-side decorations at all.
 -- 2560x1440 is a real mode the panel advertises, so a game set to it matches
 -- the window exactly with no scaling.
+-- ⚠️ NATIVE DISPATCHERS, NOT `hyprctl dispatch ...`.
+-- Under a Lua config, hyprctl evaluates its argument AS LUA. The classic string
+-- form is dead -- measured 2026-08-26 on 0.56.2:
+--     $ hyprctl dispatch centerwindow
+--     error: hl.dispatch: expected a dispatcher (e.g. hl.dsp.window.close())
+--     $ hyprctl dispatch exec true
+--     error: [string "return hl.dispatch(exec true)"]:1: ')' expected near 'true'
+--
+-- This function previously shelled out with exactly that classic syntax via
+-- exec_cmd, so all three G binds did NOTHING and said nothing -- exec_cmd
+-- surfaces no stderr. Same trap as the hyprpaper line above.
+--
+-- hl.bind accepts a plain function as its action, which is how three
+-- dispatchers get chained. Arg shapes probed against the running compositor;
+-- the stub types these as fun(...) and documents nothing:
+--     float  { action = "on" | "off" | "toggle" }
+--     resize { x = <w>, y = <h>, exact = true }   -- without exact it is a DELTA
+--     center {}
 local function centred(w, h)
-    return hl.dsp.exec_cmd(string.format(
-        "hyprctl --batch \"dispatch setfloating active; dispatch resizeactive exact %d %d; dispatch centerwindow\"", w, h))
+    return function()
+        hl.dispatch(hl.dsp.window.float({ action = "on" }))
+        hl.dispatch(hl.dsp.window.resize({ x = w, y = h, exact = true }))
+        hl.dispatch(hl.dsp.window.center({}))
+    end
 end
 hl.bind(mod .. " + G",         centred(2560, 1440))
 hl.bind(mod .. " + SHIFT + G", centred(3840, 1080))

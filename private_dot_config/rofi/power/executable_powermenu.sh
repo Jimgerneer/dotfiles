@@ -58,9 +58,9 @@ case $chosen in
         if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
             if command -v uwsm >/dev/null 2>&1; then
                 # uwsm-managed: let uwsm unwind the systemd units.
-                uwsm stop 2>/dev/null || hyprctl dispatch exit
+                uwsm stop 2>/dev/null || hyprctl dispatch 'hl.dsp.exit()'
             else
-                hyprctl dispatch exit
+                hyprctl dispatch 'hl.dsp.exit()'
             fi
         elif pgrep -x bspwm >/dev/null 2>&1; then
             bspc quit
