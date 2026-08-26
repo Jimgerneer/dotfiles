@@ -1,4 +1,5 @@
 {{- $p := index .palettes .theme -}}
+{{- $wp := printf "%s/Pictures/wallpapers/forest-gloomy-5120x1440.jpg" .chezmoi.homeDir -}}
 # Hyprland — tinos
 # Colours templated from .chezmoidata/palettes.toml (active: {{ .theme }}).
 # Keybinds deliberately mirror the old sxhkd/bspwm set so muscle memory carries.
@@ -119,6 +120,12 @@ input {
 # uwsm puts these in app-graphical.slice, so a runaway one can be killed
 # without taking the session with it.
 exec-once = hyprpaper
+# hyprpaper's own config is unreliable at session start: it enumerates outputs
+# before the wallpaper target is ready and silently draws nothing, logging
+# "Monitor ... has no target". Setting the SAME value over IPC afterwards always
+# works, so wait for its socket and tell it directly. Verified 2026-08-26 after
+# the config-file route failed twice.
+exec-once = sh -c 'S="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.hyprpaper.sock"; for i in $(seq 50); do [ -S "$S" ] && break; sleep 0.2; done; sleep 0.5; hyprctl hyprpaper wallpaper ",{{ $wp }}"'
 exec-once = /usr/lib/polkit-kde-authentication-agent-1
 exec-once = dunst
 exec-once = wl-paste --watch cliphist store
