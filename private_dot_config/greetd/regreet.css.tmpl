@@ -1,0 +1,87 @@
+{{- $p := index .palettes .theme -}}
+/* STAGING COPY -- live file is /etc/greetd/regreet.css
+ *     sudo install -Dm644 ~/.config/greetd/regreet.css /etc/greetd/regreet.css
+ *
+ * regreet reads this path automatically (verified in the binary's strings).
+ * Active palette: {{ .theme }}
+ *
+ * regreet is GTK4, so this is plain GTK4 CSS. The wallpaper is behind
+ * everything, so the login box is given a translucent ground rather than a
+ * solid one -- the forest stays visible without the text losing contrast.
+ */
+
+window, .background {
+  background-color: transparent;
+}
+
+/* The login box itself: dark, slightly translucent, sitting over the photo. */
+box.horizontal, box.vertical, grid, frame, .frame {
+  background-color: transparent;
+}
+
+#window_box, .card, frame > box {
+  background-color: alpha({{ $p.bg1 }}, 0.82);
+  border: 1px solid alpha({{ $p.bg4 }}, 0.9);
+  border-radius: 10px;
+  padding: 22px 26px;
+}
+
+label {
+  color: {{ $p.fg1 }};
+  font-size: 1.05rem;
+}
+
+/* Greeting and clock read as the loudest elements, so they take the accent
+ * and the brightest foreground respectively. */
+#greeting_label, #greeting {
+  color: {{ $p.accent }};
+  font-size: 2.0rem;
+  font-weight: 700;
+}
+#clock_label, #clock {
+  color: {{ $p.fg0 }};
+  font-size: 1.35rem;
+  font-feature-settings: "tnum";   /* stop the clock jittering as digits change */
+}
+
+entry, entry.password, .entry {
+  background-color: alpha({{ $p.bg0 }}, 0.92);
+  color: {{ $p.fg0 }};
+  border: 1px solid {{ $p.bg3 }};
+  border-radius: 7px;
+  padding: 9px 12px;
+  caret-color: {{ $p.accent }};
+}
+entry:focus, entry:focus-within {
+  border-color: {{ $p.accent }};
+  box-shadow: 0 0 0 2px alpha({{ $p.accent }}, 0.28);
+}
+
+button {
+  background-image: none;
+  background-color: alpha({{ $p.bg2 }}, 0.95);
+  color: {{ $p.fg1 }};
+  border: 1px solid {{ $p.bg3 }};
+  border-radius: 7px;
+  padding: 8px 16px;
+}
+button:hover  { background-color: {{ $p.bg3 }}; }
+button:active { background-color: {{ $p.accent }}; color: {{ $p.bg0 }}; }
+
+/* Session / user pickers */
+combobox, dropdown, popover, popover contents {
+  background-color: alpha({{ $p.bg2 }}, 0.97);
+  color: {{ $p.fg1 }};
+  border-radius: 7px;
+}
+popover listview row:selected,
+dropdown listview row:selected {
+  background-color: {{ $p.accent }};
+  color: {{ $p.bg0 }};
+}
+
+/* Wrong password */
+#error_label, .error, label.error {
+  color: {{ $p.red }};
+  font-weight: 600;
+}
