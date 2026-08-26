@@ -1,0 +1,18 @@
+[Unit]
+Description=SSH authentication agent
+Documentation=man:ssh-agent(1)
+
+[Service]
+Type=simple
+# %t is XDG_RUNTIME_DIR. A FIXED path is the whole point: the previous setup
+# (danhper/fish-ssh-agent) started an agent per shell on a RANDOM socket and
+# recorded it in ~/.ssh/environment, so only fish shells could find it. systemd
+# services and Hyprland's exec_cmd could not, which silently broke the clipboard
+# bridge and super+shift+V.
+Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket
+ExecStart=/usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
