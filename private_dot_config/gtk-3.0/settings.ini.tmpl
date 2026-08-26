@@ -15,7 +15,12 @@ gtk-icon-theme-name=Papirus-Dark
        Fix: sudo pacman -S papirus-icon-theme && chezmoi apply */ -}}
 gtk-icon-theme-name=Adwaita
 {{- end }}
-gtk-font-name=Inter 11
+# 'Adwaita Sans', not 'Inter'. An earlier version of this file named Inter,
+# which is NOT installed -- fontconfig silently substituted Noto Sans, so the
+# setting looked applied and did nothing. Adwaita Sans ships with
+# adwaita-fonts (already present) and is itself Inter-derived, so the design
+# intent is unchanged. Verified with `fc-list : family` 2026-08-26.
+gtk-font-name=Adwaita Sans 11
 gtk-application-prefer-dark-theme=1
 gtk-cursor-theme-name=Adwaita
 gtk-cursor-theme-size=24

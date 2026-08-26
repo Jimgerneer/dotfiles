@@ -26,17 +26,16 @@
 vt = 1
 
 [default_session]
-# F3 lists sessions (reads /usr/share/wayland-sessions AND /usr/share/xsessions,
-# so Hyprland and bspwm both appear). F2 edits the command -- so even if
-# everything else breaks you can type your way into a shell.
+# regreet (GTK4) rather than tuigreet (TUI), because a TUI draws with text
+# characters and therefore cannot show the wallpaper. regreet renders a real
+# image and reads its colours from a GTK theme.
 #
-# Colours are ANSI names, not hex: tuigreet renders on a Linux VT. They look
-# like the palette because /etc/vtrgb remaps the console's 16 colours to it
-# (see run_onchange_after_66-console-palette.sh.tmpl). Change `theme` and the
-# greeter follows, without touching this file.
-command = "tuigreet --time --remember --remember-user-session --asterisks --greeting 'tinos' --theme 'border=lightyellow;text=white;prompt=lightyellow;time=gray;action=lightblue;button=lightyellow;container=black;input=white'"
+# It needs a compositor to run inside; `cage` is the minimal one.
+#   -s  allow VT switching -- keep this, it is the way to a TTY if the
+#       greeter itself misbehaves.
+#   -d  no client-side decorations, so there is no title bar on the greeter.
+command = "cage -s -d -- regreet"
 user = "greeter"
 
 [general]
-# Wipe the greeter's own state between sessions.
 clear_password = true

@@ -1,0 +1,47 @@
+{{- $p := index .palettes .theme -}}
+# STAGING COPY -- live file is /etc/greetd/regreet.toml
+#     sudo install -Dm644 ~/.config/greetd/regreet.toml /etc/greetd/regreet.toml
+#
+# Active palette: {{ .theme }}
+#
+# ⚠️ THE BACKGROUND PATH IS NOT YOUR HOME DIRECTORY, ON PURPOSE.
+# The greeter runs as user `greeter` (uid 951, home `/`). /home/decoy is
+# drwx--x--- so `greeter` cannot read it -- pointing this at
+# ~/Pictures/wallpapers/... produces a silent black background, not an error.
+# The wallpaper therefore needs a system-readable copy:
+#     sudo install -Dm644 ~/Pictures/wallpapers/forest-gloomy-5120x1440.jpg \
+#          /usr/share/backgrounds/tinos-greeter.jpg
+
+# Ask for username and session every time -- the session menu is the escape
+# hatch back to bspwm during the Hyprland migration, so it should stay visible.
+skip_selection = false
+
+[background]
+path = "/usr/share/backgrounds/tinos-greeter.jpg"
+# The image is exactly 5120x1440, matching the panel, so nothing is scaled.
+# "Cover" is still correct if the wallpaper is ever swapped for another size.
+fit = "Cover"
+
+[GTK]
+application_prefer_dark_theme = true
+cursor_theme_name = "Adwaita"
+cursor_blink = true
+# Adwaita Sans, not Inter -- Inter is not installed and would silently fall
+# back to Noto Sans. See gtk-3.0/settings.ini.tmpl.
+font_name = "Adwaita Sans 14"
+icon_theme_name = "Papirus-Dark"
+theme_name = "Adwaita-dark"
+
+[appearance]
+greeting_msg = "tinos"
+
+[widget.clock]
+format = "%A  %H:%M"
+resolution = "1s"
+label_width = 220
+
+[commands]
+reboot = [ "systemctl", "reboot" ]
+poweroff = [ "systemctl", "poweroff" ]
+# Needed so bspwm (an X11 session) can still be launched from the menu.
+x11_prefix = [ "startx", "/usr/bin/env" ]
