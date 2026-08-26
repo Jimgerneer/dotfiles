@@ -18,6 +18,14 @@ font-family = "PragmataPro Mono Liga"
 font-feature = "on"
 font-size = {{ .fontSize }}
 
+# Mouse wheel. Ghostty's default is `precision:1,discrete:3` -- three lines per
+# wheel click. On its own that is fine, but inside zellij it compounds: ghostty
+# reports the scroll, zellij applies its OWN step per event, and one click jumps
+# a long way. zellij exposes no scroll-step setting, so the fix belongs here.
+#   discrete:1 = one line per click.  Try 2 if this now feels too slow.
+#   precision  = trackpads / high-res wheels; left at 1, it is already smooth.
+mouse-scroll-multiplier = precision:1,discrete:1
+
 adjust-cursor-thickness = 3
 adjust-underline-position = 3
 bold-is-bright = true
