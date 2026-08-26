@@ -33,6 +33,32 @@ link-url = true
 mouse-hide-while-typing = true
 macos-titlebar-proxy-icon = hidden
 
+# ── SSH: carry ghostty's terminfo to remote hosts ────────────────────────────
+# TERM here is `xterm-ghostty`, and no remote machine has that terminfo entry.
+# Without this, every TUI over SSH -- nvim, lazygit, gh-dash, zellij -- renders
+# wrong or refuses to start, and the usual "fix" people reach for is exporting
+# TERM=xterm-256color, which silently throws away truecolor and styled
+# underlines. This is the same class of problem kitty solved with `kitten ssh`.
+#
+# Ghostty ships the fix but ships it OFF. Defaults are:
+#   cursor,no-sudo,title,no-ssh-env,no-ssh-terminfo,path
+#
+#   ssh-terminfo  installs ghostty's terminfo on the remote on first connect and
+#                 caches the host, so it happens once. `ghostty +ssh-cache`
+#                 inspects that cache.
+#   ssh-env       fallback for hosts where installing is impossible (no tic, no
+#                 write access): propagates COLORTERM and sets a sane TERM
+#                 instead of leaving a broken one.
+#
+# `sudo` is left OFF (the default) -- it only matters for preserving terminfo
+# across sudo on the remote, which is not something this setup does.
+#
+# NOTE: zellij passes TERM through UNCHANGED, unlike tmux, which rewrites it to
+# screen-256color/tmux-256color. That is why zellij needs no terminfo dance of
+# its own -- but it also means the OUTER terminal's terminfo has to exist on the
+# remote, which is exactly what this setting arranges.
+shell-integration-features = cursor,no-sudo,title,ssh-env,ssh-terminfo,path
+
 {{/* fish is /usr/bin/fish on Arch and /opt/homebrew/bin/fish on macOS, so
      resolve it per machine rather than hardcoding. Omitted entirely if fish
      is not installed, in which case ghostty falls back to $SHELL. */}}
