@@ -1,0 +1,5 @@
+{{- /* Papirus-Dark if installed, else Adwaita. Naming a theme that is not
+       present drops GTK to hicolor and yields missing-image placeholders,
+       which is worse than merely ugly icons. Used by BOTH settings.ini and
+       the GSettings hook -- do not inline this test anywhere else. */ -}}
+{{- if stat "/usr/share/icons/Papirus-Dark" -}}Papirus-Dark{{- else -}}Adwaita{{- end -}}

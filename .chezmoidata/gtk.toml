@@ -1,0 +1,26 @@
+# GTK interface settings.
+#
+# These live here, not inline in a template, because they must be written to TWO
+# places that GTK reads independently:
+#
+#   ~/.config/gtk-3.0/settings.ini   -- GTK3 (Thunar) reads this directly
+#   GSettings org.gnome.desktop.interface
+#                                    -- GTK4/libadwaita read this through
+#                                       xdg-desktop-portal-gtk's Settings portal
+#
+# Before 2026-08-26 they disagreed: settings.ini said Adwaita-dark + Papirus-Dark
+# while GSettings said Adwaita + Adwaita and color-scheme "default". GTK3 apps
+# were dark with muted icons; GTK4 apps were told to prefer LIGHT. Nothing was
+# obviously broken, which is why it survived -- the two toolkits simply never
+# matched. One table, both consumers, no drift.
+[gtk]
+theme       = "Adwaita-dark"
+font        = "Adwaita Sans 11"
+# PragmataPro Mono Liga is what ghostty uses; GTK's monospace default was
+# "Adwaita Mono 11", so text views in GTK apps did not match the terminal.
+monospace   = "PragmataPro Mono Liga 11"
+cursor      = "Adwaita"
+cursorSize  = 24
+# libadwaita reads THIS, not gtk-application-prefer-dark-theme. It is the single
+# switch that decides whether a GTK4 app is dark.
+colorScheme = "prefer-dark"

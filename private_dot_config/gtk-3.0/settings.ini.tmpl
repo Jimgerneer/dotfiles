@@ -1,29 +1,23 @@
 {{- /* GTK3 = Thunar, the file manager. Dark is forced here rather than left to
-       the portal so it holds even when no desktop settings daemon is running. */ -}}
+       the portal so it holds even when no desktop settings daemon is running.
+
+       Every value below comes from .chezmoidata/gtk.toml, because GSettings must
+       be set to the SAME values for GTK4/libadwaita apps -- see
+       run_onchange_after_68-gsettings.sh.tmpl. Do not hard-code them here. */ -}}
 [Settings]
-gtk-theme-name=Adwaita-dark
-{{ if stat "/usr/share/icons/Papirus-Dark" -}}
-{{- /* Papirus-Dark: muted, flat, built for dark UIs. Adwaita's mime icons are
-       bright and saturated, which is exactly what made Thunar glare against
-       the dark chrome. This line switches itself the moment the package is
-       installed -- no edit needed, just `chezmoi apply` again. */ -}}
-gtk-icon-theme-name=Papirus-Dark
-{{- else -}}
-{{- /* Papirus is not installed yet. Falling back to Adwaita rather than naming
-       a theme that is not there, which would drop GTK to hicolor and give you
-       missing-image placeholders instead of merely ugly icons.
-       Fix: sudo pacman -S papirus-icon-theme && chezmoi apply */ -}}
-gtk-icon-theme-name=Adwaita
-{{- end }}
+gtk-theme-name={{ .gtk.theme }}
+gtk-icon-theme-name={{ template "gtk-icon-theme" . }}
 # 'Adwaita Sans', not 'Inter'. An earlier version of this file named Inter,
 # which is NOT installed -- fontconfig silently substituted Noto Sans, so the
 # setting looked applied and did nothing. Adwaita Sans ships with
 # adwaita-fonts (already present) and is itself Inter-derived, so the design
 # intent is unchanged. Verified with `fc-list : family` 2026-08-26.
-gtk-font-name=Adwaita Sans 11
+gtk-font-name={{ .gtk.font }}
+# GTK3 only. libadwaita ignores this and reads GSettings color-scheme instead,
+# which is why that key has to be set separately.
 gtk-application-prefer-dark-theme=1
-gtk-cursor-theme-name=Adwaita
-gtk-cursor-theme-size=24
+gtk-cursor-theme-name={{ .gtk.cursor }}
+gtk-cursor-theme-size={{ .gtk.cursorSize }}
 gtk-enable-animations=1
 gtk-xft-antialias=1
 gtk-xft-hinting=1

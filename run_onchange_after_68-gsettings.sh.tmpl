@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+#
+# Push the GTK interface settings into GSettings.
+#
+# ── WHY THIS EXISTS ───────────────────────────────────────────────────────────
+# GTK reads its appearance from two independent places, and they were disagreeing
+# on this machine until 2026-08-26:
+#
+#   GTK3 (Thunar)        -> ~/.config/gtk-3.0/settings.ini      Adwaita-dark, Papirus-Dark
+#   GTK4 / libadwaita    -> org.freedesktop.portal.Settings     Adwaita, "default" (LIGHT)
+#                           which xdg-desktop-portal-gtk answers from GSettings
+#
+# Nothing looked broken, which is exactly why it survived: GTK3 apps were dark
+# with muted icons, GTK4 apps were told to prefer light, and the two toolkits
+# simply never matched. Verified with:
+#
+#   busctl --user call org.freedesktop.portal.Desktop /org/freedesktop/portal/desktop \
+#       org.freedesktop.portal.Settings Read ss org.gnome.desktop.interface color-scheme
+#   -> v v s "default"
+#
+# `gtk-application-prefer-dark-theme=1` in settings.ini does NOT cover this.
+# libadwaita ignores that key entirely; `color-scheme` is the only switch that
+# makes a GTK4 app dark.
+#
+# Values come from .chezmoidata/gtk.toml so this file and settings.ini cannot
+# drift apart. They are interpolated literally below, which is what makes
+# run_onchange correct: change a value, the rendered script differs, it re-runs.
+#
+# ── SCOPE ─────────────────────────────────────────────────────────────────────
+# GSettings is per-user runtime state in dconf, NOT a file chezmoi can manage,
+# which is why this is a hook rather than a dotfile. It also means it needs a
+# live session bus -- so it degrades quietly when applied from a bare TTY.
+
+set -euo pipefail
+
+if ! command -v gsettings >/dev/null 2>&1; then
+    echo "gsettings: not installed, skipping."
+    exit 0
+fi
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    echo "gsettings: no session bus (applying outside a desktop session?), skipping."
+    echo "           re-run 'chezmoi apply' from inside the session to set these."
+    exit 0
+fi
+
+S=org.gnome.desktop.interface
+changed=0
+
+set_key() {
+    local key=$1 want=$2 have
+    have=$(gsettings get "$S" "$key" 2>/dev/null | sed "s/^'//; s/'$//")
+    if [ "$have" = "$want" ]; then
+        printf '    ok      %-20s %s\n' "$key" "$want"
+    else
+        gsettings set "$S" "$key" "$want"
+        printf '    SET     %-20s %s  (was: %s)\n' "$key" "$want" "$have"
+        changed=1
+    fi
+}
+
+echo "gsettings: aligning $S with gtk-3.0/settings.ini"
+set_key color-scheme        '{{ .gtk.colorScheme }}'
+set_key gtk-theme           '{{ .gtk.theme }}'
+set_key icon-theme          '{{ template "gtk-icon-theme" . }}'
+set_key cursor-theme        '{{ .gtk.cursor }}'
+set_key cursor-size         '{{ .gtk.cursorSize }}'
+set_key font-name           '{{ .gtk.font }}'
+set_key monospace-font-name '{{ .gtk.monospace }}'
+
+if [ "$changed" -eq 1 ]; then
+    cat <<'EOF'
+
+    Changed. GTK4/libadwaita apps pick this up live through the settings portal.
+    GTK3 apps (Thunar) already followed settings.ini and are unaffected.
+EOF
+fi
