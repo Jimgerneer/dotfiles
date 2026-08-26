@@ -1,0 +1,232 @@
+{{- $p := index .palettes .theme -}}
+{{- $wp := printf "%s/Pictures/wallpapers/forest-gloomy-5120x1440.jpg" .chezmoi.homeDir -}}
+-- Hyprland — tinos.  Lua config.
+--
+-- WHY LUA: Hyprland 0.56 warns "the .conf config format ... will be removed in
+-- Hyprland 0.57". Migrated deliberately on 0.56, while the old format still
+-- works and bspwm is still bootable from the greeter, rather than discovering
+-- it during a routine `pacman -Syu`.
+--
+-- Colours are templated from .chezmoidata/palettes.toml (active: {{ .theme }}).
+-- Keybinds mirror the old sxhkd/bspwm set so muscle memory carries.
+--
+-- Validate without running:  Hyprland --config ~/.config/hypr/hyprland.lua --verify-config
+
+-- Hyprland wants colours as rgba(RRGGBBAA); the palette stores #RRGGBB.
+local function col(hex) return "rgba(" .. hex:sub(2) .. "ff)" end
+
+local accent   = col("{{ $p.accent }}")
+local inactive = col("{{ $p.bg3 }}")
+
+local terminal  = "ghostty"
+local launcher  = "{{ .chezmoi.homeDir }}/.config/rofi/launchers/launcher.sh"
+local powermenu = "{{ .chezmoi.homeDir }}/.config/rofi/power/powermenu.sh"
+local wallpaper = "{{ $wp }}"
+
+------------------
+---- MONITOR -----
+------------------
+-- Under Wayland the connector is DP-2 (kernel name), not DisplayPort-1 (X11).
+--
+-- 120 Hz, NOT 240. 239.76 is available and flashes within seconds -- confirmed
+-- by controlled test with every other variable eliminated. See
+-- ~/Documents/arch-rebuild/phase-4-desktop.md. Do not raise this.
+hl.monitor({
+    output   = "DP-2",
+    mode     = "5120x1440@120",
+    position = "0x0",
+    scale    = 1,
+})
+
+-----------------------
+---- ENVIRONMENT ------
+-----------------------
+hl.env("XCURSOR_SIZE", "24")
+hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
+hl.env("QT_QPA_PLATFORM", "wayland;xcb")
+hl.env("MOZ_ENABLE_WAYLAND", "1")
+-- No AQ_DRM_DEVICES: one GPU, and card numbering is assigned at probe time, so
+-- pinning it risks a black screen on some future boot for no visible reason.
+
+-----------------------
+---- LOOK AND FEEL ----
+-----------------------
+hl.config({
+    general = {
+        gaps_in  = 7,
+        gaps_out = 15,          -- matches bspwm's window_gap 15
+        border_size = 2,
+        col = {
+            active_border   = accent,
+            inactive_border = inactive,
+        },
+        layout = "dwindle",
+        allow_tearing    = true,  -- required by the `immediate` game rule below
+        resize_on_border = true,  -- grab any edge with the mouse
+    },
+
+    decoration = {
+        rounding = 6,
+        -- No blur, no shadows: both cost GPU every frame, and this machine's
+        -- GPU has better things to do during a Resolve render.
+        blur   = { enabled = false },
+        shadow = { enabled = false },
+        active_opacity   = 1.0,
+        inactive_opacity = 1.0,   -- never dim: this is a colour-work box
+    },
+
+    animations = { enabled = true },
+
+    dwindle = { preserve_split = true },
+
+    misc = {
+        disable_hyprland_logo   = true,
+        disable_splash_rendering = true,
+        force_default_wallpaper = 0,
+        focus_on_activate       = true,
+        -- vrr = 0 is the default. Left off deliberately: this is a VA panel and
+        -- always-on VRR can flicker on a mostly-static desktop. Under X11 VRR
+        -- could never engage without an Xorg option; under Hyprland it can, so
+        -- this matters more than it looks.
+        vrr = 0,
+    },
+
+    input = {
+        kb_layout    = "us",
+        follow_mouse = 1,        -- bspwm had focus_follows_pointer true
+        sensitivity  = 0,
+        accel_profile = "flat",  -- no mouse acceleration
+        numlock_by_default = true,
+    },
+})
+
+hl.curve("snappy", { type = "bezier", points = { {0.05, 0.9}, {0.1, 1} } })
+hl.animation({ leaf = "windows",    enabled = true, speed = 4, bezier = "snappy" })
+hl.animation({ leaf = "fade",       enabled = true, speed = 4, bezier = "snappy" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 4, bezier = "snappy" })
+hl.animation({ leaf = "border",     enabled = true, speed = 6, bezier = "snappy" })
+
+-------------------
+---- AUTOSTART ----
+-------------------
+hl.on("hyprland.start", function()
+    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
+    hl.exec_cmd("dunst")
+    hl.exec_cmd("wl-paste --watch cliphist store")
+    hl.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/audio-out apply")
+    -- hyprpaper's own config does not reliably apply at session start: it
+    -- enumerates outputs before the target is ready, logs "Monitor ... has no
+    -- target" and draws nothing, while the identical value over IPC always
+    -- works. So wait for its socket, then tell it directly.
+    hl.exec_cmd("sh -c 'S=\"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.hyprpaper.sock\"; for i in $(seq 50); do [ -S \"$S\" ] && break; sleep 0.2; done; sleep 0.5; hyprctl hyprpaper wallpaper \",' .. wallpaper .. '\"'")
+end)
+
+---------------------
+---- KEYBINDINGS ----
+---------------------
+local mod = "SUPER"
+
+-- launching
+hl.bind(mod .. " + Return", hl.dsp.exec_cmd(terminal))
+hl.bind(mod .. " + space",  hl.dsp.exec_cmd(launcher))
+hl.bind(mod .. " + X",      hl.dsp.exec_cmd(powermenu))
+hl.bind(mod .. " + V",      hl.dsp.exec_cmd(terminal .. " --class=wiremix -e wiremix"))
+hl.bind(mod .. " + ALT + Q", hl.dsp.exit())
+hl.bind(mod .. " + SHIFT + C",
+        hl.dsp.exec_cmd("sh -c 'cliphist list | rofi -dmenu | cliphist decode | wl-copy'"))
+
+-- window management
+hl.bind(mod .. " + W",         hl.dsp.window.close())
+hl.bind(mod .. " + SHIFT + W", hl.dsp.window.kill())
+hl.bind(mod .. " + F",         hl.dsp.window.fullscreen())
+hl.bind(mod .. " + S",         hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mod .. " + P",         hl.dsp.window.pseudo())
+
+-- focus (vim keys, as in bspwm)
+hl.bind(mod .. " + H", hl.dsp.focus({ direction = "left"  }))
+hl.bind(mod .. " + J", hl.dsp.focus({ direction = "down"  }))
+hl.bind(mod .. " + K", hl.dsp.focus({ direction = "up"    }))
+hl.bind(mod .. " + L", hl.dsp.focus({ direction = "right" }))
+
+-- swap
+hl.bind(mod .. " + SHIFT + H", hl.dsp.window.move({ direction = "left"  }))
+hl.bind(mod .. " + SHIFT + J", hl.dsp.window.move({ direction = "down"  }))
+hl.bind(mod .. " + SHIFT + K", hl.dsp.window.move({ direction = "up"    }))
+hl.bind(mod .. " + SHIFT + L", hl.dsp.window.move({ direction = "right" }))
+
+-- mouse: drag to move and resize. Works on any window, tiled or floating.
+hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
+hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+
+-- workspaces
+for i = 1, 10 do
+    local key = i % 10                       -- 10 maps to key 0
+    hl.bind(mod .. " + " .. key,             hl.dsp.focus({ workspace = i }))
+    hl.bind(mod .. " + SHIFT + " .. key,     hl.dsp.window.move({ workspace = i }))
+end
+
+-- audio (Phase 1). locked = fires even when the session is locked, which is
+-- what you want for media keys. -l 1.0 CAPS at 100%: without it wpctl boosts
+-- past unity into software gain, which on the S/PDIF sink clips straight into
+-- the desk speakers with no analog attenuator in the way.
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),        { locked = true, repeating = true })
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),       { locked = true })
+hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),     { locked = true })
+hl.bind(mod .. " + equal",      hl.dsp.exec_cmd("wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"))
+hl.bind(mod .. " + minus",      hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"))
+hl.bind(mod .. " + SHIFT + M",  hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
+hl.bind(mod .. " + A",          hl.dsp.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/audio-out toggle"))
+hl.bind(mod .. " + SHIFT + A",  hl.dsp.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/audio-out status"))
+
+-- screenshots
+hl.bind("Print",              hl.dsp.exec_cmd("sh -c 'grim - | wl-copy'"))
+hl.bind(mod .. " + Print",    hl.dsp.exec_cmd("sh -c 'grim -g \"$(slurp)\" - | wl-copy'"))
+hl.bind(mod .. " + SHIFT + P", hl.dsp.exec_cmd("hyprpicker -a"))
+
+-- Centred-window presets, for games that handle 32:9 badly. There is no title
+-- bar to fight: Hyprland draws no server-side decorations at all.
+-- 2560x1440 is a real mode the panel advertises, so a game set to it matches
+-- the window exactly with no scaling.
+local function centred(w, h)
+    return hl.dsp.exec_cmd(string.format(
+        "hyprctl --batch \"dispatch setfloating active; dispatch resizeactive exact %d %d; dispatch centerwindow\"", w, h))
+end
+hl.bind(mod .. " + G",         centred(2560, 1440))
+hl.bind(mod .. " + SHIFT + G", centred(3840, 1080))
+hl.bind(mod .. " + CTRL + G",  centred(1920, 1080))
+
+--------------------------------
+---- WINDOW RULES --------------
+--------------------------------
+-- Never let a fullscreen app be dimmed out from under you.
+hl.window_rule({ name = "idle-fullscreen", match = { class = ".*" }, idle_inhibit = "fullscreen" })
+
+-- DaVinci Resolve: XWayland only (its launcher forces QT_QPA_PLATFORM=xcb) and
+-- must never be tiled -- its floating panels break under a tiler.
+hl.window_rule({ name = "resolve-float",  match = { class = "^(resolve)$" }, float = true })
+hl.window_rule({ name = "resolve-border", match = { class = "^(resolve)$" }, border_size = 0 })
+-- CRITICAL: hypridle measures INPUT idleness, not CPU. A three-hour render with
+-- nobody at the keyboard looks exactly like an idle machine, and the 1800 s
+-- suspend would kill it.
+hl.window_rule({ name = "resolve-idle",   match = { class = "^(resolve)$" }, idle_inhibit = "always" })
+
+-- Games
+hl.window_rule({ name = "game-float",     match = { class = "^(steam_app_.*)$" }, float = true })
+hl.window_rule({ name = "game-immediate", match = { class = "^(steam_app_.*)$" }, immediate = true })
+hl.window_rule({ name = "game-border",    match = { class = "^(steam_app_.*)$" }, border_size = 0 })
+hl.window_rule({ name = "game-center",    match = { class = "^(steam_app_.*)$" }, center = true })
+
+-- Steam's own chrome should tile normally, so it is matched separately.
+hl.window_rule({ name = "steam-friends",  match = { title = "^(Friends List)$" },   float = true })
+hl.window_rule({ name = "steam-settings", match = { title = "^(Steam Settings)$" }, float = true })
+
+-- Picture-in-picture and dialogs
+hl.window_rule({ name = "pip-float", match = { title = "^(Picture-in-Picture)$" }, float = true })
+hl.window_rule({ name = "pip-pin",   match = { title = "^(Picture-in-Picture)$" }, pin = true })
+hl.window_rule({ name = "util-float",
+    match = { class = "^(pavucontrol|wiremix|nm-connection-editor|blueman-manager)$" }, float = true })
+hl.window_rule({ name = "filedlg-float",
+    match = { title = "^(Open File|Save File|Save As|Open Folder)$" }, float = true })
