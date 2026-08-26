@@ -52,7 +52,22 @@ case $chosen in
     $logout)
 		ans=$($dir/confirm.sh)
 		if [[ $ans == "yes" ]] || [[ $ans == "YES" ]] || [[ $ans == "y" ]]; then
-        bspc quit
+        # Compositor-aware logout. This was `bspc quit`, a bspwm command that
+        # silently does NOTHING under Hyprland -- the menu entry looked like it
+        # worked and the session stayed up. Fixed 2026-08-26.
+        if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
+            if command -v uwsm >/dev/null 2>&1; then
+                # uwsm-managed: let uwsm unwind the systemd units.
+                uwsm stop 2>/dev/null || hyprctl dispatch exit
+            else
+                hyprctl dispatch exit
+            fi
+        elif pgrep -x bspwm >/dev/null 2>&1; then
+            bspc quit
+        else
+            # Last resort: end every session belonging to this user.
+            loginctl terminate-user "$USER"
+        fi
 		elif [[ $ans == "no" ]] || [[ $ans == "NO" ]] || [[ $ans == "n" ]]; then
         exit
         else
