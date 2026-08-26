@@ -51,4 +51,5 @@
 .config/gtk-4.0
 .config/rofi
 .config/hypr
+.config/waybar
 {{ end }}

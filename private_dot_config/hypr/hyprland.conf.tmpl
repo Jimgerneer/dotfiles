@@ -127,6 +127,7 @@ exec-once = hyprpaper
 # the config-file route failed twice.
 exec-once = sh -c 'S="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.hyprpaper.sock"; for i in $(seq 50); do [ -S "$S" ] && break; sleep 0.2; done; sleep 0.5; hyprctl hyprpaper wallpaper ",{{ $wp }}"'
 exec-once = /usr/lib/polkit-kde-authentication-agent-1
+exec-once = waybar
 exec-once = dunst
 exec-once = wl-paste --watch cliphist store
 exec-once = ~/.local/bin/audio-out apply
