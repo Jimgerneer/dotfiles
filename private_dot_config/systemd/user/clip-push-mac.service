@@ -1,0 +1,24 @@
+[Unit]
+Description=Push the tinos clipboard to the work Mac
+Documentation=file://%h/Documents/arch-rebuild/phase-6-remote-mac.md
+# Dies with the graphical session -- wl-paste needs a Wayland display, and there
+# is nothing to watch without one.
+PartOf=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+# Without these, a Mac that is switched off turns Restart=always into a hot loop
+# that fills the journal. Five tries a minute, then stop, is enough to ride out a
+# Mac reboot without spamming.
+# ⚠️ These are [Unit] keys, NOT [Service]. Put them in [Service] and systemd
+# ignores them silently -- `systemd-analyze verify` is the only thing that says so.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/clip-push-mac
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=graphical-session.target

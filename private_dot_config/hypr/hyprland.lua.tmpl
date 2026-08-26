@@ -141,6 +141,11 @@ hl.bind(mod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(mod .. " + space",  hl.dsp.exec_cmd(launcher))
 hl.bind(mod .. " + X",      hl.dsp.exec_cmd(powermenu))
 hl.bind(mod .. " + V",      hl.dsp.exec_cmd(terminal .. " --class=wiremix -e wiremix"))
+-- Pull the work Mac's clipboard into this one, once. The PUSH direction runs
+-- continuously as clip-push-mac.service; pulling is a hotkey on purpose --
+-- running both as daemons feeds back on itself (copy here -> push -> Mac
+-- pasteboard changes -> pull -> push...). See phase-6-remote-mac.md.
+hl.bind(mod .. " + SHIFT + V", hl.dsp.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/clip-pull-mac"))
 hl.bind(mod .. " + ALT + Q", hl.dsp.exit())
 hl.bind(mod .. " + SHIFT + C",
         hl.dsp.exec_cmd("sh -c 'cliphist list | rofi -dmenu | cliphist decode | wl-copy'"))

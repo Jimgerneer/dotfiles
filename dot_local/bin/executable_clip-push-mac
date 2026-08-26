@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Push this machine's clipboard to the work Mac, continuously.
+#
+# `wl-paste --watch` runs the command once per clipboard change, feeding the new
+# content on stdin. macOS needs nothing installed -- pbcopy ships with it.
+#
+# ControlMaster/ControlPersist in ~/.ssh/config means this reuses one already-open
+# TCP+crypto channel instead of handshaking per copy, so a copy costs a few
+# milliseconds on the LAN rather than a full SSH connection.
+#
+# ⚠️ ONE DIRECTION ONLY. Pulling continuously as well creates a feedback loop:
+# copy here -> push to Mac -> Mac pasteboard changes -> pull back -> --watch
+# fires again. Every project that has attempted bidirectional clipboard sync has
+# an issue tracker full of it. The other direction is clip-pull-mac, on a hotkey.
+#
+# BatchMode=yes so a sleeping Mac fails immediately instead of hanging on a
+# password prompt with no terminal to type into. Individual copies are lost while
+# the Mac is asleep; wl-paste keeps watching and recovers on its own.
+set -euo pipefail
+exec wl-paste --type text --watch ssh -o BatchMode=yes mac pbcopy

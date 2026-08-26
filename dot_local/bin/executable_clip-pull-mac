@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Pull the work Mac's clipboard into this machine's, once.
+#
+# Deliberately NOT a daemon -- see the loop warning in clip-push-mac. Bound to
+# super+shift+V: press it, then paste normally.
+set -euo pipefail
+ssh -o BatchMode=yes mac pbpaste | wl-copy
