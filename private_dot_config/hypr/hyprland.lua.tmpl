@@ -121,7 +121,14 @@ hl.on("hyprland.start", function()
     -- enumerates outputs before the target is ready, logs "Monitor ... has no
     -- target" and draws nothing, while the identical value over IPC always
     -- works. So wait for its socket, then tell it directly.
-    hl.exec_cmd("sh -c 'S=\"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.hyprpaper.sock\"; for i in $(seq 50); do [ -S \"$S\" ] && break; sleep 0.2; done; sleep 0.5; hyprctl hyprpaper wallpaper \",' .. wallpaper .. '\"'")
+    --
+    -- NOTE: the path is interpolated by the TEMPLATE ({{ "{{ $wp }}" }}), not by Lua
+    -- concatenation. An earlier version wrote `' .. wallpaper .. '` inside this
+    -- double-quoted Lua string, where it is not concatenation at all -- it is
+    -- literal text, and there is no `wallpaper` variable in Lua scope either.
+    -- hyprpaper received it verbatim and answered `bad path: ' .. wallpaper .. '`,
+    -- which is silent at session start because nothing surfaces exec_cmd stderr.
+    hl.exec_cmd("sh -c 'S=\"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.hyprpaper.sock\"; for i in $(seq 50); do [ -S \"$S\" ] && break; sleep 0.2; done; sleep 0.5; hyprctl hyprpaper wallpaper \",{{ $wp }}\"'")
 end)
 
 ---------------------
