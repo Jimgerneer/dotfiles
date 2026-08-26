@@ -2,7 +2,14 @@
 # AUR, which is the most common stale advice in Hyprland guides.
 {{ $wp := printf "%s/Pictures/wallpapers/forest-gloomy-5120x1440.jpg" .chezmoi.homeDir }}
 preload = {{ $wp }}
-wallpaper = DP-2,{{ $wp }}
+# Empty monitor field = apply to EVERY output.
+#
+# This was `DP-2,...` and it silently failed at session start: hyprpaper logged
+# "Monitor DP-2 has no target: no wp will be created" and drew nothing, while
+# setting the identical value over IPC afterwards worked fine. That is a startup
+# race -- the output is enumerated before the named target is ready. The empty
+# form has no name to race against.
+wallpaper = ,{{ $wp }}
 # The image is pre-cropped to exactly 5120x1440, so no scaling happens at all.
 splash = false
 ipc = on
