@@ -1,0 +1,156 @@
+{{- $p := index .palettes .theme -}}
+{{- $wp := printf "%s/Pictures/wallpapers/forest-gloomy-5120x1440.jpg" .chezmoi.homeDir -}}
+#!/usr/bin/env bash
+#
+# Generate the `tinos` Plymouth theme from the active palette.
+#
+# Palette fingerprint -- this comment is what makes run_onchange fire on a theme
+# switch. chezmoi hashes the rendered script, so the resolved values must appear
+# in the body or the hook would only re-run when the *template* changes.
+#
+#   theme={{ .theme }}
+#   bg0={{ $p.bg0 }} bg1={{ $p.bg1 }} bg2={{ $p.bg2 }} bg3={{ $p.bg3 }}
+#   fg1={{ $p.fg1 }} fg2={{ $p.fg2 }} accent={{ $p.accent }}
+#
+# ── WHY THIS GENERATES BUT DOES NOT INSTALL ───────────────────────────────────
+# Plymouth themes live in /usr/share/plymouth/themes/, which is root-owned and
+# outside chezmoi's scope -- same situation as /etc/greetd/config.toml and
+# /etc/vconsole.conf. These hooks never call sudo (you should not have a dotfile
+# apply silently escalating), so this writes a complete theme to a staging
+# directory and prints the one command that installs it.
+#
+# Installing a theme is not enough on its own, either: the mkinitcpio `plymouth`
+# hook copies whatever `plymouth-set-default-theme` reports into the initramfs,
+# so the theme has to be regenerated INTO the boot image. That is what the -R
+# flag does, and why the install step ends with a mkinitcpio run.
+#
+# ── HOW THE ASSETS ARE RECOLOURED ─────────────────────────────────────────────
+# The upstream `spinner` assets carry their SHAPE IN THE ALPHA CHANNEL and are
+# nearly flat in RGB (throbber-0001: RGB mean 57,57,57 / alpha std-dev 64). That
+# is why `-colorize 100` is correct here: it replaces RGB wholesale and leaves
+# alpha untouched, so the anti-aliased edges and the throbber's fade survive.
+# `-tint` would be wrong -- it weights by luminance, and on near-black source
+# pixels it produces a muddy dark result (measured: RGB 71,57,29 instead of the
+# intended 250,189,47).
+# ──────────────────────────────────────────────────────────────────────────────
+
+set -euo pipefail
+
+SRC=/usr/share/plymouth/themes/spinner
+OUT="{{ .chezmoi.homeDir }}/.local/share/tinos-plymouth-theme"
+WALLPAPER="{{ $wp }}"
+
+# Background is generated at 2560x720 and upscaled by Plymouth at draw time
+# (ScaleBackgroundImage). Full 5120x1440 PNG would be ~4x the bytes and this
+# image lands in BOTH initramfs images, on a 512M /boot. The source is a soft,
+# dark forest photo shown for a few seconds -- 2x upscaling is invisible on it.
+BG_SIZE=2560x720
+
+if [ ! -d "$SRC" ]; then
+    echo "plymouth-theme: $SRC not found -- is plymouth installed? skipping."
+    exit 0
+fi
+if ! command -v magick >/dev/null 2>&1; then
+    echo "plymouth-theme: imagemagick not found, skipping."
+    exit 0
+fi
+
+rm -rf "$OUT"
+mkdir -p "$OUT"
+
+# ── assets ────────────────────────────────────────────────────────────────────
+# Accent: the spinning throbber and the boot animation.
+for f in "$SRC"/throbber-*.png "$SRC"/animation-*.png; do
+    [ -e "$f" ] || continue
+    magick "$f" -fill '{{ $p.accent }}' -colorize 100 "$OUT/$(basename "$f")" 2>/dev/null
+done
+
+# Foreground: everything the password dialog draws ON the entry field.
+for f in bullet lock capslock keyboard keymap-render; do
+    [ -e "$SRC/$f.png" ] || continue
+    magick "$SRC/$f.png" -fill '{{ $p.fg1 }}' -colorize 100 "$OUT/$f.png" 2>/dev/null
+done
+
+# The entry field itself. Upstream ships a blue-grey box (RGB 50,64,78) that
+# reads as GNOME, not as this desktop. bg1 keeps it neutral against a photo.
+if [ -e "$SRC/entry.png" ]; then
+    magick "$SRC/entry.png" -fill '{{ $p.bg1 }}' -colorize 100 "$OUT/entry.png" 2>/dev/null
+fi
+
+# watermark.png is deliberately NOT copied -- two-step skips it when absent, and
+# a distro logo is not wanted here.
+
+# ── background ────────────────────────────────────────────────────────────────
+# The same wallpaper as hyprpaper, hyprlock and regreet, so LUKS prompt ->
+# greeter -> desktop is one continuous image. Darkened, because the password
+# dialog has no drop shadow and has to stay legible over it.
+if [ -e "$WALLPAPER" ]; then
+    magick "$WALLPAPER" \
+        -resize "${BG_SIZE}^" -gravity center -extent "$BG_SIZE" \
+        -brightness-contrast -22x-8 -strip \
+        "$OUT/background.png" 2>/dev/null
+else
+    echo "plymouth-theme: wallpaper missing ($WALLPAPER) -- flat background only."
+fi
+
+# ── theme definition ──────────────────────────────────────────────────────────
+# ImageDir must be the INSTALLED path, not $OUT: the mkinitcpio hook reads this
+# key and copies that directory into the initramfs.
+#
+# BackgroundStart/EndColor are the fallback if background.png fails to load, and
+# also the colour of any letterboxing. bg0 keeps that failure mode looking
+# deliberate instead of black.
+cat > "$OUT/tinos.plymouth" <<EOF
+[Plymouth Theme]
+Name=Tinos
+Description=Palette-driven two-step theme ({{ .theme }}), generated by chezmoi.
+ModuleName=two-step
+
+[two-step]
+ImageDir=/usr/share/plymouth/themes/tinos
+Font=Adwaita Sans 16
+TitleFont=Adwaita Sans Light 34
+MonospaceFont=Adwaita Mono 14
+
+ScaleBackgroundImage=true
+BackgroundStartColor={{ printf "0x%s" (trimPrefix "#" $p.bg0) }}
+BackgroundEndColor={{ printf "0x%s" (trimPrefix "#" $p.bg0) }}
+ProgressBarBackgroundColor={{ printf "0x%s" (trimPrefix "#" $p.bg3) }}
+ProgressBarForegroundColor={{ printf "0x%s" (trimPrefix "#" $p.accent) }}
+ConsoleLogBackgroundColor={{ printf "0x%s" (trimPrefix "#" $p.bg0) }}
+ConsoleLogTextColor={{ printf "0x%s" (trimPrefix "#" $p.fg2) }}
+
+DialogHorizontalAlignment=.5
+DialogVerticalAlignment=.5
+TitleHorizontalAlignment=.5
+TitleVerticalAlignment=.382
+HorizontalAlignment=.5
+VerticalAlignment=.72
+Transition=none
+TransitionDuration=0.0
+
+# Clears the firmware's BGRT logo, which this board does draw (ACPI BGRT table
+# present, status=1). Without this the vendor logo stays behind the splash.
+DialogClearsFirmwareBackground=true
+MessageBelowAnimation=true
+
+[boot-up]
+UseEndAnimation=false
+
+[shutdown]
+UseEndAnimation=false
+
+[reboot]
+UseEndAnimation=false
+EOF
+
+cat <<EOF
+plymouth-theme: generated '{{ .theme }}' -> $OUT
+                $(ls "$OUT" | wc -l) files, $(du -sh "$OUT" | cut -f1)
+
+  To install (needs root, and rebuilds the initramfs):
+
+    sudo rm -rf /usr/share/plymouth/themes/tinos
+    sudo cp -r $OUT /usr/share/plymouth/themes/tinos
+    sudo plymouth-set-default-theme -R tinos
+EOF
