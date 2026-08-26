@@ -20,7 +20,15 @@
 # The rate is written as 239.76 rather than 240 because that is the mode the
 # panel actually reports. Hyprland matches the nearest, so 240 would also work,
 # but the exact figure documents what is really being driven.
-monitor = DP-2, 5120x1440@239.76, 0x0, 1
+# ⚠️ 2026-08-25: BACKED OFF TO 120 Hz. Enabling DP 1.4 in the monitor OSD did
+# make 239.76 available and PREFERRED, but the display flashes at that rate --
+# X came up at 239.76 after a reboot and was unusable until forced back to 120.
+# Notably the kernel logs ZERO link-training failures, so the link "trains"
+# and then fails to hold, which is the classic signature of a DP cable that is
+# not truly HBR3/DP-1.4 rated rather than a driver or compositor fault.
+# 120 Hz is the rate this machine ran stable on for months.
+# Do not raise this again until a known-good DP 1.4 cable is in place.
+monitor = DP-2, 5120x1440@120, 0x0, 1
 monitor = , preferred, auto, 1          # anything else: sane default
 
 # ── Environment ──────────────────────────────────────────────────────────────
