@@ -30,6 +30,10 @@ if pgrep -x Thunar >/dev/null 2>&1; then
     say thunar "live (GTK watches gtk.css)"
 fi
 
+# --- rofi: nothing to signal. It is not a daemon -- every invocation parses
+#     its .rasi fresh, so the next launcher press is already re-themed. --------
+say rofi "no action needed (re-reads .rasi on every launch)"
+
 # --- dunst ------------------------------------------------------------------
 if pgrep -x dunst >/dev/null 2>&1; then
     if command -v dunstctl >/dev/null 2>&1; then
