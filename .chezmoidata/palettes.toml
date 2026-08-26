@@ -1,0 +1,106 @@
+# Desktop palettes.
+#
+# Everything in .chezmoidata/ is merged into chezmoi's template data, so any
+# template can read `.palettes`. Which one is active comes from `.theme` in
+# ~/.config/chezmoi/chezmoi.toml -- machine-local and NOT in this repo, so the
+# laptop and the Mac can each run a different palette from the same commit.
+#
+#     {{ $p := index .palettes .theme }}  ->  {{ $p.bg0 }}
+#
+# Switch with the `theme` fish function (see conf.d/theme.fish), which flips the
+# selector and re-applies. The run_onchange reload hook then fires exactly once,
+# because its content hash includes the resolved palette.
+#
+# ── WHY THE SATURATION FIGURES MATTER ─────────────────────────────────────────
+# Resolve and darktable run on this machine. Saturated desktop chrome measurably
+# biases colour judgement -- simultaneous contrast, chromatic adaptation, and the
+# surround effect. It does NOT change what those programs do to pixels; it
+# changes the grade you decide on while looking at biased surroundings, and that
+# decision is what gets baked in.
+#
+# The rule from phase-4-desktop.md: NEUTRAL CORE, COLOURED PERIPHERY. Anything
+# adjacent to an image must be neutral; colour belongs in the bar and terminal.
+# Resolve is already immune -- it ships fixed neutral gray and ignores the theme.
+#
+# The wallpaper matters more than any of this on a 5120x1440 panel.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Gruvbox Dark, hard variant, ground lifted +1.
+# Background saturation ~7.5% -- the slight cool cast is in #1d2021 itself;
+# the warmth you perceive comes from the foregrounds, not the ground.
+[palettes.gruvbox-dark-hard]
+bg0     = "#16191a"   # editor / viewer background
+bg1     = "#1f2324"   # window background
+bg2     = "#2b2b2b"   # cards, bar, headerbar
+bg3     = "#3f3b38"   # borders
+bg4     = "#534b47"   # separators
+fg0     = "#fbf1c7"
+fg1     = "#ebdbb2"
+fg2     = "#a89984"
+accent  = "#fabd2f"
+red     = "#fb4934"
+green   = "#b8bb26"
+yellow  = "#fabd2f"
+blue    = "#83a598"
+magenta = "#d3869b"
+cyan    = "#8ec07c"
+
+# Tokyo Night, ground darkened -3 and its chroma scaled to 75%.
+# Background saturation ~14.3% -- keeps the palette's identity in the accents
+# while pulling the ground back toward neutral.
+
+# ANSI 0-15, as the terminals want them. 0-7 normal, 8-15 bright.
+[palettes.gruvbox-dark-hard.ansi]
+0  = "#1d2021"   # black
+1  = "#cc241d"   # red
+2  = "#98971a"   # green
+3  = "#d79921"   # yellow
+4  = "#458588"   # blue
+5  = "#b16286"   # magenta
+6  = "#689d6a"   # cyan
+7  = "#a89984"   # white
+8  = "#928374"   # br black
+9  = "#fb4934"   # br red
+10 = "#b8bb26"   # br green
+11 = "#fabd2f"   # br yellow
+12 = "#83a598"   # br blue
+13 = "#d3869b"   # br magenta
+14 = "#8ec07c"   # br cyan
+15 = "#ebdbb2"   # br white
+
+[palettes.tokyo-night-deep]
+bg0     = "#101014"
+bg1     = "#15151c"
+bg2     = "#21232f"
+bg3     = "#262936"
+bg4     = "#393e53"
+fg0     = "#c7ceee"
+fg1     = "#afb5d0"
+fg2     = "#7c7f95"
+accent  = "#7aa2f7"
+red     = "#f7768e"
+green   = "#9ece6a"
+yellow  = "#e0af68"
+blue    = "#7aa2f7"
+magenta = "#bb9af7"
+cyan    = "#7dcfff"
+
+
+# ANSI 0-15, as the terminals want them. 0-7 normal, 8-15 bright.
+[palettes.tokyo-night-deep.ansi]
+0  = "#15161e"   # black
+1  = "#f7768e"   # red
+2  = "#9ece6a"   # green
+3  = "#e0af68"   # yellow
+4  = "#7aa2f7"   # blue
+5  = "#bb9af7"   # magenta
+6  = "#7dcfff"   # cyan
+7  = "#a9b1d6"   # white
+8  = "#414868"   # br black
+9  = "#ff7a93"   # br red
+10 = "#b9f27c"   # br green
+11 = "#ff9e64"   # br yellow
+12 = "#7da6ff"   # br blue
+13 = "#bb9af7"   # br magenta
+14 = "#0db9d7"   # br cyan
+15 = "#c0caf5"   # br white

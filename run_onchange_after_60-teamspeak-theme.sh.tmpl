@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# Re-tint the TeamSpeak 3 skin to the active chezmoi palette.
+#
+# WHY IT WORKS THIS WAY
+# TS3 skins are plain Qt stylesheets (QSS). QSS has no variables and no imports,
+# so there is nothing to parameterise -- colours are baked in as literals. But
+# DarkenTS-Dissension uses only ~43 distinct colours with a clean tonal
+# structure, so substituting them by value produces a faithful re-tint of a
+# skin that already covers every widget. Writing a skin from scratch would mean
+# 40 KB of selectors and would look worse.
+#
+# WHY IT READS THE LOCAL FILE INSTEAD OF A COPY IN THIS REPO
+# DarkenTS-Dissension is someone else's work and this repo is public. Vendoring
+# a modified copy of it is a licensing question I should not answer on your
+# behalf. So the repo carries only the colour MAP; the skin itself stays local
+# and uncommitted. On a machine without DarkenTS installed this exits quietly.
+#
+# WHAT YOU DO ONCE
+# TeamSpeak stores the selected skin in settings.db (SQLite), which this does
+# not touch. Pick "tinos" once in Options -> Design -> Skin. After that the
+# selection never changes -- switching palettes just rewrites tinos.qss in
+# place, and TS3 picks it up on next start.
+#
+# palette: {{ .theme }}
+{{- $p := index .palettes .theme }}
+
+set -euo pipefail
+STYLES="$HOME/.ts3client/styles"
+BASE="$STYLES/DarkenTS-Dissension"
+
+[ -r "$BASE.qss" ] || { echo "teamspeak-theme: DarkenTS-Dissension not installed, skipping"; exit 0; }
+command -v python3 >/dev/null || { echo "teamspeak-theme: python3 missing, skipping"; exit 0; }
+
+python3 - "$STYLES" <<'PY'
+import io, os, re, sys
+
+STYLES = sys.argv[1]
+SRC    = "DarkenTS-Dissension"
+DST    = "tinos"
+
+P = dict(
+    bg0     = "{{ $p.bg0 }}",  bg1  = "{{ $p.bg1 }}",  bg2 = "{{ $p.bg2 }}",
+    bg3     = "{{ $p.bg3 }}",  bg4  = "{{ $p.bg4 }}",
+    fg0     = "{{ $p.fg0 }}",  fg1  = "{{ $p.fg1 }}",  fg2 = "{{ $p.fg2 }}",
+    accent  = "{{ $p.accent }}",
+    red     = "{{ $p.red }}",  green   = "{{ $p.green }}", yellow = "{{ $p.yellow }}",
+    blue    = "{{ $p.blue }}", magenta = "{{ $p.magenta }}", cyan = "{{ $p.cyan }}",
+)
+
+def rgb(h):
+    h = h.lstrip("#")
+    return (int(h[0:2],16), int(h[2:4],16), int(h[4:6],16))
+
+# DarkenTS colour -> palette role. Grounds are mapped by luminance rank so the
+# skin's depth ordering survives into any palette; hues are mapped by meaning.
+MAP_SPEC = [
+    # --- grounds, darkest to lightest ---
+    ((28,30,34),    "bg0"),      # deepest wells (chat log, server tree)
+    ((30,33,36),    "bg1"),      # main window ground -- most used colour
+    ((35,38,41),    "bg1"),
+    ((40,43,48),    "bg2"),      # toolbars, headers, cards
+    ((46,49,54),    "bg2"),
+    ((54,57,62),    "bg3"),      # borders
+    ((55,59,66),    "bg3"),
+    ((44,50,63),    "bg2"),
+    ((74,67,58),    "bg3"),
+    ((79,84,92),    "bg4"),      # separators, scrollbar sliders
+    # --- selection: DarkenTS uses a muted blue, not a saturated accent.
+    #     Keep it a ground so a selected row never shouts next to a thumbnail.
+    ((58,66,91),    "bg4"),
+    ((66,75,102),   "bg4"),
+    # --- foregrounds ---
+    ((195,196,197), "fg1"),
+    ((216,216,216), "fg0"),
+    ((219,221,225), "fg0"),
+    # --- accents and status hues ---
+    ((88,104,158),  "accent"),
+    ((114,137,218), "accent"),
+    ((105,126,196), "accent"),
+    ((108,129,202), "accent"),
+    ((204,51,102),  "magenta"),  # #cc3366
+    ((255,166,26),  "yellow"),   # away
+    ((250,166,26),  "yellow"),
+    ((240,71,71),   "red"),
+    ((214,71,68),   "red"),
+    ((201,7,20),    "red"),
+    ((128,62,65),   "red"),
+    ((67,181,129),  "green"),    # online
+    ((0,150,207),   "cyan"),
+    # --- second pass: tones that live only in _chat/_win/_mac ---
+    ((33,36,40),    "bg1"),
+    ((42,45,50),    "bg2"),
+    ((47,52,66),    "bg2"),
+    ((60,59,58),    "bg3"),
+    ((62,65,70),    "bg3"),
+    ((102,102,102), "fg2"),
+    ((255,255,255), "fg0"),
+    ((224,224,224), "fg0"),
+    ((17,138,39),   "green"),
+    ((201,7,10),    "red"),
+    ((203,59,59),   "red"),      # #cb3b3b
+    # rgba(0,0,0,*) is deliberately NOT mapped: those are drop shadows, and a
+    # shadow should stay black in every palette.
+]
+MAP = dict((k, rgb(P[v])) for k, v in MAP_SPEC)
+
+HEX = re.compile(r"#([0-9a-fA-F]{6})\b")
+FUN = re.compile(r"\brgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([0-9.]+)\s*)?\)")
+
+hits = [0, 0]
+
+def sub_hex(m):
+    t = rgb(m.group(1))
+    if t in MAP:
+        hits[0] += 1
+        return "rgb(%d,%d,%d)" % MAP[t]
+    hits[1] += 1
+    return m.group(0)
+
+def sub_fun(m):
+    t = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    a = m.group(4)
+    if t in MAP:
+        hits[0] += 1
+        n = MAP[t]
+        return ("rgba(%d,%d,%d,%s)" % (n[0], n[1], n[2], a)) if a else ("rgb(%d,%d,%d)" % n)
+    hits[1] += 1
+    return m.group(0)
+
+wrote = []
+for suffix in ("", "_chat", "_linux", "_win", "_mac"):
+    src = os.path.join(STYLES, SRC + suffix + ".qss")
+    if not os.path.exists(src):
+        continue
+    s = io.open(src, encoding="utf-8", errors="replace").read()
+    s = HEX.sub(sub_hex, s)
+    s = FUN.sub(sub_fun, s)
+    # url() refs use the `styles:` alias and point into DarkenTS's own gfx/
+    # folder. Leave them pointing there -- the images are palette-neutral
+    # arrows and splitters, and copying them would duplicate ~40 assets.
+    header = ("/* GENERATED by chezmoi from %s%s.qss -- do not hand-edit.\n"
+              " * Re-tinted to palette: {{ .theme }}\n"
+              " * Regenerate: chezmoi apply\n */\n") % (SRC, suffix)
+    dst = os.path.join(STYLES, DST + suffix + ".qss")
+    io.open(dst, "w", encoding="utf-8").write(header + s)
+    wrote.append(os.path.basename(dst))
+
+# TS3 looks for <skin>/ alongside <skin>.qss for the .tpl info templates.
+# Point at DarkenTS's rather than duplicating the folder.
+link = os.path.join(STYLES, DST)
+if not os.path.exists(link) and os.path.isdir(os.path.join(STYLES, SRC)):
+    os.symlink(SRC, link)
+    wrote.append(DST + "/ -> " + SRC + "/")
+
+print("teamspeak-theme: %s (%d colours mapped, %d left as-is)"
+      % (", ".join(wrote), hits[0], hits[1]))
+PY

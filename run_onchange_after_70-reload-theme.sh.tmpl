@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Push the newly-applied palette into everything already running.
+#
+# This is a run_onchange_ script, so chezmoi re-runs it exactly when its own
+# rendered content changes. The palette values below are what make that true:
+# switch palettes and this text differs, so it fires. Re-apply without changing
+# the palette and it does not. That is the whole mechanism -- no timestamps, no
+# state file.
+#
+# palette:  {{ .theme }}
+{{- $p := index .palettes .theme }}
+# ground:   {{ $p.bg1 }}
+# accent:   {{ $p.accent }}
+# ansi:     {{ range $i, $c := $p.ansi }}{{ $c }} {{ end }}
+
+set -uo pipefail
+say() { printf '  %-10s %s\n' "$1" "$2"; }
+echo "reload-theme: palette is now {{ .theme }}"
+
+# --- kitty: SIGUSR1 makes every running instance re-read its config ----------
+if pgrep -x kitty >/dev/null 2>&1; then
+    pkill -USR1 -x kitty && say kitty "reloaded in place"
+else
+    say kitty "not running"
+fi
+
+# --- ghostty: SIGUSR2 is its config-reload signal ---------------------------
+if pgrep -x ghostty >/dev/null 2>&1; then
+    pkill -USR2 -x ghostty && say ghostty "reloaded in place"
+else
+    say ghostty "not running"
+fi
+
+# --- GTK3: no signal needed. GTK file-monitors ~/.config/gtk-3.0/gtk.css and
+#     restyles live, so Thunar recolours without being restarted. -------------
+if pgrep -x Thunar >/dev/null 2>&1; then
+    say thunar "live (GTK watches gtk.css)"
+fi
+
+# --- dunst ------------------------------------------------------------------
+if pgrep -x dunst >/dev/null 2>&1; then
+    if command -v dunstctl >/dev/null 2>&1; then
+        dunstctl reload >/dev/null 2>&1 && say dunst "reloaded"
+    else
+        pkill -HUP -x dunst && say dunst "SIGHUP sent"
+    fi
+else
+    say dunst "not running"
+fi
+
+# --- TeamSpeak 3: Qt reads the .qss once at startup. Nothing to signal. ------
+if pgrep -f 'ts3client' >/dev/null 2>&1; then
+    say teamspeak "RESTART REQUIRED -- Qt loads the skin only at startup"
+fi
+
+# --- Anything already-open that cannot be told: say so plainly rather than
+#     leaving you wondering why one window did not change. -------------------
+cat <<'NOTE'
+
+  Not reloadable in place -- these pick the palette up on next start:
+    TeamSpeak 3   (Qt loads .qss at startup; pick "tinos" once under
+                   Options -> Design -> Skin, then it stays selected)
+    Brave         (theme is set inside the browser, not by this repo)
+    GTK4 apps     (libadwaita caches its stylesheet per-process)
+NOTE

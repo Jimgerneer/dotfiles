@@ -1,6 +1,15 @@
-# Theme
-theme = {{ .ghosttyTheme }}
-
+{{- $p := index .palettes .theme -}}
+# Colours come from .chezmoidata/palettes.toml, selected by `theme` in
+# ~/.config/chezmoi/chezmoi.toml. Switch with the `theme` command.
+# Active palette: {{ .theme }}
+background = {{ $p.bg1 }}
+foreground = {{ $p.fg1 }}
+cursor-color = {{ $p.accent }}
+selection-background = {{ $p.bg3 }}
+selection-foreground = {{ $p.fg0 }}
+{{ range $i, $c := $p.ansi -}}
+palette = {{ $i }}={{ $c }}
+{{ end }}
 # Font
 # font-family-bold = "PragmataPro Mono Liga Bold"
 # font-family-italic = "PragmataProp Mono Liga Italic"

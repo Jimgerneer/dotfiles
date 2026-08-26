@@ -7,8 +7,12 @@ Defaults below are the work-machine values.
 {{- $fontSize     := promptIntOnce    . "fontSize"     "Terminal font size"   16 -}}
 {{- $ghosttyTheme := promptStringOnce . "ghosttyTheme" "Ghostty theme"        "Gruvbox Dark" -}}
 {{- $zellijTheme  := promptStringOnce . "zellijTheme"  "Zellij theme"         "gruvbox-dark" -}}
+{{- /* Which palette from .chezmoidata/palettes.toml drives the desktop.
+       Machine-local, so each machine can differ. Switch later with `theme`. */ -}}
+{{- $theme        := promptStringOnce . "theme"         "Desktop palette"      "gruvbox-dark-hard" -}}
 
 [data]
     fontSize = {{ $fontSize }}
     ghosttyTheme = {{ $ghosttyTheme | quote }}
     zellijTheme = {{ $zellijTheme | quote }}
+    theme = {{ $theme | quote }}
