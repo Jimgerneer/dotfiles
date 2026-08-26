@@ -150,6 +150,11 @@ hl.bind(mod .. " + W",         hl.dsp.window.close())
 hl.bind(mod .. " + SHIFT + W", hl.dsp.window.kill())
 hl.bind(mod .. " + F",         hl.dsp.window.fullscreen())
 hl.bind(mod .. " + S",         hl.dsp.window.float({ action = "toggle" }))
+-- Explicit "back to tiled", the counterpart to the centred presets below.
+-- `action = "off"` SETS the state rather than flipping it, so this always lands
+-- tiled no matter what the window was doing. The toggle above cannot promise
+-- that: hit it on an already-tiled window and you float it instead.
+hl.bind(mod .. " + SHIFT + S", hl.dsp.window.float({ action = "off" }))
 hl.bind(mod .. " + P",         hl.dsp.window.pseudo())
 
 -- focus (vim keys, as in bspwm)
