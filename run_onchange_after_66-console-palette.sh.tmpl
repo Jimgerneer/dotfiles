@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Recolour the Linux virtual consoles from the active palette.
+#
+# WHY THIS IS WORTH DOING
+# The VTs are not just "the fallback" -- they are the LUKS passphrase prompt,
+# the boot messages, the greeter, and the place you land when the desktop
+# breaks. Stock console colours are the 1990s VGA palette: pure #AA0000 reds
+# and #00AAAA cyans that look nothing like the rest of the system.
+#
+# setvtrgb takes three comma-separated lines (red, green, blue), each with the
+# 16 console colour values. That maps exactly onto the `ansi` table already in
+# palettes.toml, so the console follows `theme <name>` like everything else.
+#
+# ⚠️ APPLYING IT NEEDS ROOT, so this script only GENERATES the file. Installing
+# it is a one-time manual step, printed at the end. Chezmoi hooks deliberately
+# never call sudo -- a dotfiles apply should not be able to prompt for your
+# password.
+#
+# palette: {{ .theme }}
+{{- $p := index .palettes .theme }}
+
+set -euo pipefail
+command -v python3 >/dev/null || { echo "console-palette: python3 missing, skipping"; exit 0; }
+
+python3 - <<'PY'
+import io, os
+
+OUT = os.path.expanduser("~/.config/vtrgb")
+os.makedirs(OUT, exist_ok=True)
+
+ANSI = [
+{{- range $i := until 16 }}
+    "{{ index $p.ansi (printf "%d" $i) }}",
+{{- end }}
+]
+
+rgb = [(int(h[1:3],16), int(h[3:5],16), int(h[5:7],16)) for h in ANSI]
+lines = [",".join(str(c[i]) for c in rgb) for i in range(3)]
+
+path = os.path.join(OUT, "console-palette")
+io.open(path, "w").write("\n".join(lines) + "\n")
+print("console-palette: wrote %s  (palette {{ .theme }})" % path)
+
+# Only nag if it differs from what is actually installed.
+etc = "/etc/vtrgb"
+cur = None
+try:
+    cur = io.open(etc).read()
+except Exception:
+    pass
+want = "\n".join(lines) + "\n"
+if cur != want:
+    print("console-palette: /etc/vtrgb is out of date. To apply:")
+    print("    sudo cp ~/.config/vtrgb/console-palette /etc/vtrgb")
+    print("    sudo systemctl restart vtrgb.service   # if the unit is installed")
+PY

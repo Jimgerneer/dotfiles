@@ -1,0 +1,42 @@
+{{- $p := index .palettes .theme -}}
+# STAGING COPY. The live file is /etc/greetd/config.toml -- chezmoi manages
+# $HOME only, so install with:
+#     sudo install -Dm644 ~/.config/greetd/config.toml /etc/greetd/config.toml
+#
+# Active palette: {{ .theme }}
+#
+# ── NO AUTOLOGIN, and that is deliberate ─────────────────────────────────────
+# An earlier draft used [initial_session] to go straight to the desktop after
+# the LUKS passphrase. Reversed 2026-08-25 because it interacts badly with the
+# gnome-keyring that the Wayland stack pulls in:
+#
+#   normal login  -> PAM unlocks the login keyring with your password. One
+#                    password unlocks the session AND the keyring.
+#   autologin     -> nothing for PAM to unlock with, so the keyring prompts
+#                    separately on every boot.
+#
+# Autologin therefore does not remove a password prompt, it moves it and makes
+# it uglier -- while forcing a choice between a plaintext keyring and a second
+# prompt. A single greetd login is strictly better.
+#
+# It also keeps the session menu in front of you at every boot, which is the
+# bspwm escape hatch during the Hyprland migration.
+
+[terminal]
+vt = 1
+
+[default_session]
+# F3 lists sessions (reads /usr/share/wayland-sessions AND /usr/share/xsessions,
+# so Hyprland and bspwm both appear). F2 edits the command -- so even if
+# everything else breaks you can type your way into a shell.
+#
+# Colours are ANSI names, not hex: tuigreet renders on a Linux VT. They look
+# like the palette because /etc/vtrgb remaps the console's 16 colours to it
+# (see run_onchange_after_66-console-palette.sh.tmpl). Change `theme` and the
+# greeter follows, without touching this file.
+command = "tuigreet --time --remember --remember-user-session --asterisks --greeting 'tinos' --theme 'border=lightyellow;text=white;prompt=lightyellow;time=gray;action=lightblue;button=lightyellow;container=black;input=white'"
+user = "greeter"
+
+[general]
+# Wipe the greeter's own state between sessions.
+clear_password = true

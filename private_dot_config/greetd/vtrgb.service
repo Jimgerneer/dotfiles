@@ -1,0 +1,23 @@
+# STAGING COPY -- install with:
+#     sudo install -Dm644 ~/.config/greetd/vtrgb.service /etc/systemd/system/vtrgb.service
+#     sudo systemctl enable --now vtrgb.service
+#
+# Applies the palette to the Linux virtual consoles, so the LUKS prompt, boot
+# messages, tuigreet and any TTY you fall back to all match the desktop.
+#
+# Runs before greetd so the greeter is drawn with the right colours from its
+# first frame rather than flickering from VGA defaults.
+
+[Unit]
+Description=Apply palette to Linux virtual consoles
+After=systemd-vconsole-setup.service
+Before=greetd.service display-manager.service
+ConditionPathExists=/etc/vtrgb
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/setvtrgb /etc/vtrgb
+
+[Install]
+WantedBy=multi-user.target
