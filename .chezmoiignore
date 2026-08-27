@@ -52,4 +52,24 @@
 .config/rofi
 .config/hypr
 .config/waybar
+
+# Added 2026-08-26. The work Mac tracks this repo too, so anything that assumes
+# a Linux desktop has to be excluded explicitly or it lands there as clutter --
+# or worse, as a unit file that looks like it should be doing something.
+#
+#   greetd         the login greeter; there is no greetd on macOS
+#   systemd        macOS has launchd. Nothing under here can run there.
+#                  (xonar-spdif.service is ALSO in the tinos-only block above,
+#                   because it is hardware-specific even among Linux machines.)
+#   environment.d  read by the systemd user manager; meaningless without one
+#   dbus-1         the D-Bus session-service override for gnome-keyring
+#   clip-*-mac     the clipboard bridge. wl-paste/wl-copy are Wayland tools, and
+#                  the direction is tinos -> Mac, so on the Mac they are both
+#                  non-functional and backwards.
+.config/greetd
+.config/systemd
+.config/environment.d
+.local/share/dbus-1
+.local/bin/clip-push-mac
+.local/bin/clip-pull-mac
 {{ end }}
