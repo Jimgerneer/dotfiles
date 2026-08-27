@@ -17,4 +17,13 @@
 # password prompt with no terminal to type into. Individual copies are lost while
 # the Mac is asleep; wl-paste keeps watching and recovers on its own.
 set -euo pipefail
+
+# The agent socket is at a FIXED path (ssh-agent.service), but do not assume the
+# caller inherited SSH_AUTH_SOCK. Hyprland's exec_cmd children inherit the
+# COMPOSITOR's environment, which is fixed at session start -- so a Hyprland
+# started before ~/.config/environment.d/10-ssh-agent.conf existed has no
+# SSH_AUTH_SOCK, and the keybind fails silently while the same script works fine
+# from a shell. Setting it here makes the script correct regardless of caller.
+: "${SSH_AUTH_SOCK:=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket}"
+export SSH_AUTH_SOCK
 exec wl-paste --type text --watch ssh -o BatchMode=yes mac pbcopy
