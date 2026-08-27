@@ -57,6 +57,11 @@
 .config/fish/conf.d/fish_frozen_key_bindings.fish
 .config/fish/conf.d/fish_frozen_theme.fish
 .config/fish/conf.d/fish-ssh-agent_init.fish
+
+# `work` attaches to a zellij session on the work Mac over ssh. On the Mac
+# itself it would be pointing at itself, and the `mac` ssh host does not exist
+# there anyway.
+.config/fish/functions/work.fish
 {{ end }}
 
 # ---------------------------------------------------------------------------
