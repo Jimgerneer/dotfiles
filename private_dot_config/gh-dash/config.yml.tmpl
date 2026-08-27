@@ -1,0 +1,70 @@
+# gh-dash — the terminal GitHub dashboard.
+#
+# Sections are ordered by how actionable they are, not alphabetically: the first
+# tab is the one that means someone is waiting on you.
+#
+# Repo sections come from where the work actually is. Merged PRs in the last 90
+# days, measured 2026-08-26:
+#     bzzr-dashboard 22, bzzr-admin 18, bzzr-web 15, bzzr-firebase 4, corpus 1
+# If that shifts, re-measure rather than guess:
+#     gh search prs --owner=onlysportsfans --author=@me --merged --limit=60 \
+#         --json repository --jq '.[].repository.name' | sort | uniq -c | sort -rn
+
+prSections:
+  - title: Needs My Review
+    filters: is:open org:onlysportsfans review-requested:@me
+  - title: Mine
+    filters: is:open org:onlysportsfans author:@me
+  - title: Involved
+    filters: is:open org:onlysportsfans involves:@me -author:@me
+  - title: dashboard
+    filters: is:open repo:onlysportsfans/bzzr-dashboard
+  - title: admin
+    filters: is:open repo:onlysportsfans/bzzr-admin
+  - title: web
+    filters: is:open repo:onlysportsfans/bzzr-web
+  - title: firebase
+    filters: is:open repo:onlysportsfans/bzzr-firebase
+  - title: corpus
+    filters: is:open repo:onlysportsfans/corpus
+  - title: All Open
+    filters: is:open org:onlysportsfans
+
+# ── ISSUES ───────────────────────────────────────────────────────────────────
+# Shaped differently from the PR sections ON PURPOSE: the PR work and the issue
+# work are not in the same repos. Measured 2026-08-26:
+#
+#   assigned to you   bzzr-web 26, bzzr-admin 2, bzzr-firebase 1
+#   authored by you   bzzr-web 21, bzzr-flutter 9, bzzr-admin 5
+#   whole org open    bzzr-web 48, bzzr-flutter 9, bzzr-firebase 5, bzzr-admin 5
+#
+# bzzr-web is the issue hub and holds your actual queue; bzzr-flutter's issues
+# are entirely your own. Neither is where most of your PRs land.
+issuesSections:
+  # Your queue. 26 items as of writing -- this is the tab that matters.
+  - title: Assigned
+    filters: is:open org:onlysportsfans assignee:@me sort:updated-desc
+  - title: web
+    filters: is:open repo:onlysportsfans/bzzr-web
+  - title: flutter
+    filters: is:open repo:onlysportsfans/bzzr-flutter
+  - title: Mine
+    filters: is:open org:onlysportsfans author:@me
+  # Triage: filed but nobody owns it yet.
+  - title: Unassigned
+    filters: is:open org:onlysportsfans no:assignee
+  - title: All Open
+    filters: is:open org:onlysportsfans sort:updated-desc
+
+# Lets gh-dash check a PR out into the existing local clone instead of cloning
+# somewhere new. Templated so it resolves on either machine.
+repoPaths:
+  onlysportsfans/*: {{ .chezmoi.homeDir }}/Code/*
+
+defaults:
+  view: prs
+  prsLimit: 30
+  issuesLimit: 30
+  preview:
+    open: true
+    width: 60
