@@ -13,4 +13,18 @@ set -euo pipefail
 # from a shell. Setting it here makes the script correct regardless of caller.
 : "${SSH_AUTH_SOCK:=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket}"
 export SSH_AUTH_SOCK
-ssh -o BatchMode=yes mac pbpaste | wl-copy
+# The bind is otherwise silent, so pressing it feels like nothing happened --
+# especially as this only FETCHES; you still paste with the app's own shortcut.
+# notify-send is guarded because dunst is a Linux-desktop thing and this script
+# should not hard-fail without it.
+if ssh -o BatchMode=yes mac pbpaste | wl-copy; then
+    if command -v notify-send >/dev/null 2>&1; then
+        chars=$(wl-paste 2>/dev/null | wc -c)
+        notify-send -t 1500 -a clipboard "Clipboard ← Mac" "${chars} chars. Paste as usual."
+    fi
+else
+    command -v notify-send >/dev/null 2>&1 &&
+        notify-send -t 3000 -u critical -a clipboard "Clipboard ← Mac FAILED" \
+            "Is the Mac awake? Try: ssh mac pbpaste"
+    exit 1
+fi
