@@ -36,6 +36,26 @@ start)
     # Accessibility to Deskflow.app. Exec'ing deskflow-core directly over ssh
     # attributes it to sshd instead and it cannot inject input at all.
     if remote <<'REMOTE'
+# ⚠️ startCoreWithGui can revert to false. With it false, `open -a Deskflow`
+# opens the window and never spawns deskflow-core, so you have to press Connect
+# by hand -- which is the whole thing this script exists to avoid.
+#
+# Observed 2026-08-27: an edit stuck across one launch, then read false again.
+# A later stop/start cycle did NOT revert it, so the likely culprit was a
+# long-running GUI instance predating the edit writing its stale in-memory
+# value out on quit -- not a rewrite on every quit as first assumed.
+#
+# Setting it HERE is safe and self-healing: we only reach this point with
+# Deskflow stopped, which is the only moment the file can be edited without the
+# app clobbering it. The permanent alternative is to tick the box once in the
+# GUI's own settings, on the Mac.
+CONF="$HOME/Library/Deskflow/Deskflow.conf"   # NB: not ~/.config, this is macOS
+if [ -f "$CONF" ] && ! pgrep -qf 'Deskflow.app/Contents/MacOS/Deskflow'; then
+    sed -i '' 's/^startCoreWithGui=false$/startCoreWithGui=true/' "$CONF"
+    # One mechanism owns the clipboard and it is the SSH bridge, not Deskflow.
+    sed -i '' 's/^clipboardSharing=true$/clipboardSharing=false/' "$CONF"
+fi
+
 open -a Deskflow || exit 1
 pgrep -f 'caffeinate -dis -t 43200' >/dev/null 2>&1 \
     || (nohup caffeinate -dis -t 43200 >/dev/null 2>&1 &)
