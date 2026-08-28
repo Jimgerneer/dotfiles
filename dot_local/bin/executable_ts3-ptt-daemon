@@ -42,7 +42,12 @@ RELEASE_DELAY = float(os.environ.get("TS3_PTT_RELEASE_DELAY", "0.30"))
 # TS3 resets the mic state by itself -- starting up and joining a server both
 # do it -- and offers no way to read the state back, so the intended state is
 # re-imposed on this interval whenever the button is idle.
-IDLE_REASSERT = float(os.environ.get("TS3_PTT_REASSERT", "5.0"))
+# Backstop only. TS3 now notifies us when it changes state, so this exists to
+# catch anything the notifications miss, not as the primary mechanism.
+IDLE_REASSERT = float(os.environ.get("TS3_PTT_REASSERT", "30.0"))
+# A connect emits several notifications in a row; wait for them to stop before
+# imposing state, so we do not fight TS3 mid-handshake.
+NOTIFY_SETTLE = 1.0
 
 
 def log(msg):
@@ -126,6 +131,24 @@ class TS3:
                     raise RuntimeError(line.decode(errors="replace"))
                 return
 
+    def subscribe(self):
+        """Ask TS3 to tell us when it changes things underneath us.
+
+        notifyconnectstatuschange fires as a server connection comes up, which
+        is exactly when TS3 resets the mic and left this daemon believing a
+        stale mute was still in force. Subscribing means we correct on the
+        event instead of discovering it on a timer.
+        schandlerid=0 means all server connection handlers, not just the
+        current tab.
+        """
+        for event in ("notifyconnectstatuschange",
+                      "notifycurrentserverconnectionchanged"):
+            self._cmd(f"clientnotifyregister schandlerid=0 event={event}")
+
+    def readline_nb(self):
+        """One line, called only when select() says the socket is readable."""
+        return self._readline()
+
     def mic(self, on):
         # client_input_deactivated: 0 = mic live, 1 = muted.
         self._cmd(f"clientupdate client_input_deactivated={0 if on else 1}")
@@ -145,12 +168,14 @@ def session():
     log(f"reading {dev.path} ({dev.name})")
 
     ts3 = TS3()
-    log(f"ClientQuery authenticated "
-        f"(release {RELEASE_DELAY:.2f}s, re-assert {IDLE_REASSERT:.0f}s)")
+    ts3.subscribe()
+    log(f"ClientQuery authenticated, subscribed "
+        f"(release {RELEASE_DELAY:.2f}s, backstop {IDLE_REASSERT:.0f}s)")
 
     desired = False             # what the button says the mic should be
-    live = None                 # what we last sent, to avoid needless traffic
-    mute_at = None              # monotonic deadline for a pending mute
+    live = None                 # what we last sent, to suppress needless traffic
+    mute_at = None              # deadline for a pending mute after release
+    settle_at = None            # deadline for a re-assert after a TS3 event
 
     def apply(force=False):
         nonlocal live
@@ -162,54 +187,57 @@ def session():
 
     try:
         sel = selectors.DefaultSelector()
-        sel.register(dev, selectors.EVENT_READ)
+        sel.register(dev, selectors.EVENT_READ, "dev")
+        sel.register(ts3.sock, selectors.EVENT_READ, "ts3")
+
         while True:
-            # Block until input, until a pending mute comes due, or until it is
-            # time to re-assert -- whichever is soonest. Single-threaded, so
-            # there is no second clock to keep in step.
-            if mute_at is not None:
-                timeout = max(0.0, mute_at - time.monotonic())
-            else:
-                timeout = IDLE_REASSERT
+            now = time.monotonic()
+            # Soonest of: pending mute, post-event settle, periodic backstop.
+            deadlines = [d for d in (mute_at, settle_at) if d is not None]
+            timeout = (min(deadlines) - now) if deadlines else IDLE_REASSERT
+            timeout = max(0.0, timeout)
 
             events = sel.select(timeout=timeout)
+            now = time.monotonic()
 
             if not events:
-                if mute_at is not None and time.monotonic() >= mute_at:
+                if mute_at is not None and now >= mute_at:
                     desired = False
                     apply()
                     mute_at = None
-                else:
-                    # ⚠️ Re-assert unconditionally, ignoring the cache.
-                    # TS3 changes the mic state on its own -- notably when it
-                    # starts and joins a server, which left it stuck UNMUTED
-                    # because we still believed our last send was in force.
-                    # There is no readable variable to check against either:
-                    # `clientvariable client_input_deactivated` answers
-                    # "error id=1539 parameter not found". So state cannot be
-                    # queried, only imposed.
+                elif settle_at is not None and now >= settle_at:
+                    # TS3 just changed something; impose our state over it.
                     apply(force=True)
+                    settle_at = None
+                else:
+                    apply(force=True)        # periodic backstop
                 continue
 
             for key, _ in events:
+                if key.data == "ts3":
+                    # A notification, or a stray reply. Either way TS3 spoke
+                    # unprompted, which is our cue to re-impose shortly --
+                    # debounced, because a connect emits several in a row.
+                    line = ts3.readline_nb()
+                    if line.startswith(b"notify"):
+                        settle_at = now + NOTIFY_SETTLE
+                    continue
+
                 for ev in key.fileobj.read():
                     if ev.type != ecodes.EV_KEY or ev.code != BUTTON:
                         continue
                     if ev.value == 1:
-                        # Pressed again inside the release window: cancel the
-                        # pending mute so a pause mid-sentence is not clipped.
                         mute_at = None
                         desired = True
                         apply()
                     elif ev.value == 0:
-                        # Do NOT mute here -- muting on the instant of release
-                        # cuts the tail off every transmission, which is what
-                        # TS3's own release delay exists to prevent.
-                        mute_at = time.monotonic() + RELEASE_DELAY
+                        # Not an immediate mute -- that clips the tail of every
+                        # transmission, which is what TS3's release delay is for.
+                        mute_at = now + RELEASE_DELAY
     finally:
         try:
             desired = False
-            ts3.mic(False)       # never leave the mic hot on the way out
+            ts3.mic(False)
         except OSError:
             pass
         ts3.close()
