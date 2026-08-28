@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# Install the packages declared in .chezmoidata/packages.yaml.
+#
+# hash of packages.yaml: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
+#
+# ⚠️ That hash comment is load-bearing, not decoration. run_onchange_ re-runs
+# when the SCRIPT's rendered content changes; the script body barely changes, so
+# without the hash an edit to packages.yaml would never trigger anything.
+#
+# `before` so packages exist before the dotfiles that configure them land.
+#
+# Only MISSING packages are installed, and sudo is invoked only if there is
+# something to do -- otherwise every `chezmoi apply` would prompt for a password
+# to perform a no-op, and you would quickly start avoiding `chezmoi apply`.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+{{ if eq .chezmoi.os "linux" -}}
+want_native=$(printf '%s\n' {{ range .packages.arch.pacman }}{{ . | quote }} {{ end }} | sort -u)
+want_aur=$(printf '%s\n' {{ range .packages.arch.aur }}{{ . | quote }} {{ end }} | sort -u)
+
+# One `pacman -Qq` and a comm, not 200 individual queries.
+installed=$(pacman -Qq | sort -u)
+
+missing_native=$(comm -23 <(printf '%s\n' "$want_native") <(printf '%s\n' "$installed") | tr '\n' ' ')
+missing_aur=$(comm -23 <(printf '%s\n' "$want_aur") <(printf '%s\n' "$installed") | tr '\n' ' ')
+
+if [ -n "${missing_native// /}" ]; then
+    echo "packages: installing native ->$missing_native"
+    # shellcheck disable=SC2086
+    sudo pacman -S --needed --noconfirm $missing_native
+else
+    echo "packages: native up to date"
+fi
+
+if [ -n "${missing_aur// /}" ]; then
+    if command -v yay >/dev/null 2>&1; then
+        echo "packages: installing AUR ->$missing_aur"
+        # shellcheck disable=SC2086
+        yay -S --needed --noconfirm $missing_aur
+    else
+        echo "packages: yay not installed; skipping AUR ->$missing_aur" >&2
+    fi
+else
+    echo "packages: AUR up to date"
+fi
+{{ end -}}
+
+{{ if eq .chezmoi.os "darwin" -}}
+BREW=/opt/homebrew/bin/brew
+[ -x "$BREW" ] || BREW=$(command -v brew || true)
+if [ -z "$BREW" ]; then
+    echo "packages: homebrew not found; skipping" >&2
+    exit 0
+fi
+
+# Taps first -- a formula or cask from an untapped source cannot resolve.
+have_taps=$("$BREW" tap | sort -u)
+{{ range .packages.darwin.tap -}}
+printf '%s\n' "$have_taps" | grep -qx {{ . | quote }} || { echo "packages: tapping {{ . }}"; "$BREW" tap {{ . | quote }}; }
+{{ end }}
+have_formula=$("$BREW" list --formula -1 | sort -u)
+missing_formula=$(comm -23 <(printf '%s\n' {{ range .packages.darwin.brew }}{{ . | quote }} {{ end }} | sort -u) <(printf '%s\n' "$have_formula") | tr '\n' ' ')
+if [ -n "${missing_formula// /}" ]; then
+    echo "packages: installing formulae ->$missing_formula"
+    # shellcheck disable=SC2086
+    "$BREW" install $missing_formula
+else
+    echo "packages: formulae up to date"
+fi
+
+have_cask=$("$BREW" list --cask -1 2>/dev/null | sort -u)
+missing_cask=$(comm -23 <(printf '%s\n' {{ range .packages.darwin.cask }}{{ . | quote }} {{ end }} | sort -u) <(printf '%s\n' "$have_cask") | tr '\n' ' ')
+if [ -n "${missing_cask// /}" ]; then
+    echo "packages: installing casks ->$missing_cask"
+    # shellcheck disable=SC2086
+    "$BREW" install --cask $missing_cask
+else
+    echo "packages: casks up to date"
+fi
+{{ end -}}

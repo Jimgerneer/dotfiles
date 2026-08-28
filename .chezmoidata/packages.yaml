@@ -1,0 +1,267 @@
+# Package manifests, consumed by run_onchange_before_10-packages.sh.tmpl.
+#
+# chezmoi loads every file in .chezmoidata/ into template data, so these arrive
+# as .packages.arch.pacman and friends.
+#
+# ⚠️ EXPLICIT packages only (pacman -Qqen / -Qqem). Dependencies are deliberately
+# absent: pacman resolves those itself, and listing them would make this file
+# churn on every upgrade until nobody reads the diff any more.
+#
+# Regenerate:
+#   pacman -Qqen                                    -> arch.pacman
+#   pacman -Qqem                                    -> arch.aur
+#   brew bundle dump --file=- --force               -> darwin.*
+#
+# This is a snapshot, not a lockfile. No versions are pinned, which is the right
+# trade for a desktop but does mean it reproduces a machine approximately.
+#
+# gitleaks is load-bearing, not incidental: .githooks/pre-commit hard-fails
+# without it. Removing it from this list silently disables secret scanning on
+# the next fresh machine.
+packages:
+  arch:
+    pacman:
+      - adobe-source-han-sans-otc-fonts
+      - adobe-source-han-serif-otc-fonts
+      - age
+      - alsa-card-profiles
+      - alsa-utils
+      - amd-ucode
+      - autoconf
+      - automake
+      - base
+      - base-devel
+      - binutils
+      - bison
+      - bluez
+      - bluez-utils
+      - bspwm
+      - cage
+      - calibre
+      - chezmoi
+      - clinfo
+      - cliphist
+      - darktable
+      - discord
+      - dunst
+      - edk2-ovmf
+      - efibootmgr
+      - evtest
+      - ex-vi-compat
+      - eza
+      - fakeroot
+      - fd
+      - ffmpegthumbnailer
+      - file
+      - findutils
+      - firefox
+      - fish
+      - flex
+      - fzf
+      - gawk
+      - gcc
+      - gettext
+      - ghostty
+      - git
+      - github-cli
+      - gitleaks
+      - gnome-keyring
+      - greetd
+      - greetd-regreet
+      - greetd-tuigreet
+      - grep
+      - grim
+      - groff
+      - grub
+      - gvfs
+      - gvfs-afc
+      - gvfs-smb
+      - gzip
+      - htop
+      - hyprcursor
+      - hypridle
+      - hyprland
+      - hyprlock
+      - hyprpaper
+      - hyprpicker
+      - lib32-mesa
+      - lib32-vulkan-radeon
+      - libinput-tools
+      - libreoffice-fresh
+      - libtool
+      - libvirt
+      - linux
+      - linux-firmware-amdgpu
+      - linux-firmware-atheros
+      - linux-firmware-broadcom
+      - linux-firmware-cirrus
+      - linux-firmware-intel
+      - linux-firmware-mediatek
+      - linux-firmware-nvidia
+      - linux-firmware-other
+      - linux-firmware-radeon
+      - linux-firmware-realtek
+      - linux-firmware-whence
+      - liquidctl
+      - lshw
+      - lsp-plugins-lv2
+      - m4
+      - make
+      - neovim
+      - networkmanager
+      - noise-suppression-for-voice
+      - noto-fonts
+      - noto-fonts-cjk
+      - npm
+      - nss-mdns
+      - ntfs-3g
+      - ntfsprogs
+      - obsidian
+      - openrgb
+      - openssh
+      - pacman
+      - pacman-contrib
+      - papirus-icon-theme
+      - patch
+      - pavucontrol
+      - picom
+      - pipewire-alsa
+      - pipewire-audio
+      - pipewire-jack
+      - pipewire-pulse
+      - pkgconf
+      - plymouth
+      - polkit-gnome
+      - polkit-kde-agent
+      - python-evdev
+      - qemu-desktop
+      - qpwgraph
+      - qt6-wayland
+      - ranger
+      - realtime-privileges
+      - restic
+      - ripgrep
+      - rofi
+      - sbctl
+      - seahorse
+      - sed
+      - slurp
+      - starship
+      - steam
+      - sudo
+      - sxhkd
+      - teamspeak3
+      - texinfo
+      - the_silver_searcher
+      - thunar
+      - thunar-archive-plugin
+      - thunar-volman
+      - tmux
+      - transmission-gtk
+      - tree
+      - tumbler
+      - unzip
+      - uwsm
+      - virt-manager
+      - vlc
+      - vlc-plugin-ffmpeg
+      - vulkan-radeon
+      - vulkan-tools
+      - waybar
+      - which
+      - wiremix
+      - wireplumber
+      - wl-clipboard
+      - xdg-desktop-portal-hyprland
+      - xdg-user-dirs
+      - xf86-video-amdgpu
+      - xorg-iceauth
+      - xorg-server
+      - xorg-sessreg
+      - xorg-smproxy
+      - xorg-x11perf
+      - xorg-xbacklight
+      - xorg-xcmsdb
+      - xorg-xcursorgen
+      - xorg-xdpyinfo
+      - xorg-xdriinfo
+      - xorg-xev
+      - xorg-xgamma
+      - xorg-xhost
+      - xorg-xinit
+      - xorg-xinput
+      - xorg-xkbevd
+      - xorg-xkbutils
+      - xorg-xkill
+      - xorg-xlsatoms
+      - xorg-xlsclients
+      - xorg-xpr
+      - xorg-xrandr
+      - xorg-xrefresh
+      - xorg-xsetroot
+      - xorg-xvinfo
+      - xorg-xwd
+      - xorg-xwininfo
+      - xorg-xwud
+      - xterm
+      - yazi
+      - zathura
+      - zathura-pdf-mupdf
+      - zellij
+      - zram-generator
+    aur:
+      - 1password
+      - 1password-cli
+      - brave-bin
+      - claude-code
+      - coreshot
+      - davinci-resolve-studio
+      - deskflow-git
+      - google-chrome
+      - mbedtls2
+      - nerd-fonts-complete
+      - nitrogen
+      - nodenv
+      - noto-fonts-tc
+      - rasdaemon
+      - slack-desktop
+      - spotify
+      - stressapptest
+      - todoist
+      - yay
+      - zoom
+      - zsa-wally
+  darwin:
+    tap:
+      - leoafarias/fvm
+      - peonping/tap
+    brew:
+      - chezmoi
+      - fd
+      - ffmpeg
+      - fish
+      - fisher
+      - fvm
+      - gh
+      - git-delta
+      - gitleaks
+      - lazygit
+      - marksman
+      - neovim
+      - node
+      - nvm
+      - ollama
+      - openjdk
+      - prettierd
+      - python@3.13
+      - python@3.14
+      - ripgrep
+      - starship
+      - tmux
+      - zellij
+    cask:
+      - claude-code
+      - gcloud-cli
+      - ghostty
+      - kitty
+      - slack

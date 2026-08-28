@@ -15,7 +15,8 @@
 # gitleaks is a static Go binary with no runtime dependencies, so there is
 # nothing to be portable about.
 #
-# gitleaks is declared in .packages/ for both machines. It is NOT optional:
+# gitleaks is declared in .chezmoidata/packages.yaml for both machines and is
+# installed by run_onchange_before_10-packages.sh. It is NOT optional:
 # a missing scanner fails the commit rather than quietly letting it through.
 #
 # Escape hatch:  git commit --no-verify
@@ -37,7 +38,7 @@ if ! command -v gitleaks >/dev/null 2>&1; then
     echo "  This repo is public, so the scan is not optional." >&2
     echo "    Arch: sudo pacman -S gitleaks" >&2
     echo "    mac : brew install gitleaks" >&2
-    echo "  Both are listed in .packages/." >&2
+    echo "  Both are declared in .chezmoidata/packages.yaml; chezmoi apply installs them." >&2
     echo >&2
     echo "  If you are certain: git commit --no-verify" >&2
     exit 1

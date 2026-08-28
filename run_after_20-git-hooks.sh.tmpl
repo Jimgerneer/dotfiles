@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# Wire .githooks/ into this repo's git config.
+#
+# core.hooksPath lives in .git/config, which is NOT versioned. Cloning brings
+# the hook FILE down and leaves it connected to nothing -- silently, and failing
+# OPEN: no scanning, and no indication you have none. On a public repo that is
+# the worst possible failure direction.
+#
+# ⚠️ `run_after_`, NOT `run_once_`, on purpose. run_once_ fires a single time per
+# machine and is then never reconsidered, so if the setting is later cleared --
+# a re-clone, a stray `git config --unset`, someone copying .git around -- it
+# would never notice. This is an idempotent one-line git call costing about a
+# millisecond, so running it on every apply buys self-healing for nothing.
+#
+# Silent unless it actually changes something: a script that prints on every
+# apply trains you to stop reading apply output.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SRC={{ .chezmoi.sourceDir | quote }}
+
+# Only meaningful if the source dir is a git checkout; a chezmoi source tree does
+# not have to be one.
+[ -d "$SRC/.git" ] || exit 0
+[ -f "$SRC/.githooks/pre-commit" ] || exit 0
+
+current=$(git -C "$SRC" config --get core.hooksPath 2>/dev/null || true)
+if [ "$current" != ".githooks" ]; then
+    git -C "$SRC" config core.hooksPath .githooks
+    echo "git hooks: core.hooksPath set to .githooks (was ${current:-unset})"
+fi
