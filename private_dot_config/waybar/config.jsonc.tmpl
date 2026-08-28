@@ -16,7 +16,7 @@
 
   "modules-left":   ["hyprland/workspaces", "hyprland/submap"],
   "modules-center": ["hyprland/window"],
-  "modules-right":  ["custom/audioout", "wireplumber", "custom/mic",
+  "modules-right":  ["custom/work", "custom/audioout", "wireplumber", "custom/mic",
                      "cpu", "memory", "temperature", "tray", "clock"],
 
   "hyprland/workspaces": {
@@ -35,6 +35,19 @@
   // Reuses ~/.local/bin/audio-out from Phase 1 rather than reimplementing the
   // logic. That script hardware-mutes the unused stage, which is the only way
   // this card actually stops mirroring analog onto S/PDIF.
+  // ── Work session against the Mac ─────────────────────────────────────────
+  // Deskflow shares this keyboard and mouse with the Mac, and clip-push-mac
+  // sends this clipboard there continuously, so a live session changes what
+  // the whole machine does -- not just one terminal. That is why this is a bar
+  // indicator and not a window title. Empty output when closed, so the module
+  // vanishes rather than sitting there saying "no".
+  "custom/work": {
+    "exec": "{{ .chezmoi.homeDir }}/.local/bin/work-indicator",
+    "interval": 30,
+    "format": "{}",
+    "tooltip": false
+  },
+
   "custom/audioout": {
     "exec": "{{ .chezmoi.homeDir }}/.local/bin/audio-out status 2>/dev/null | head -1 | awk '{print $1}'",
     "interval": 5,

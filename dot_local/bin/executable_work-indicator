@@ -1,0 +1,20 @@
+#!/bin/sh
+# Waybar module: is a work session live, and for how long.
+#
+# Prints nothing when no session is open -- waybar renders an empty label, so
+# the module simply disappears rather than showing a placeholder.
+#
+# The state file is written by `work --start` and removed by `work --end`; see
+# ~/.config/fish/functions/work.fish.
+STATE="$HOME/.local/state/work-session"
+[ -f "$STATE" ] || exit 0
+
+started=$(cat "$STATE" 2>/dev/null) || exit 0
+case "$started" in ''|*[!0-9]*) exit 0 ;; esac   # ignore a corrupt stamp
+
+mins=$(( ( $(date +%s) - started ) / 60 ))
+if [ "$mins" -lt 60 ]; then
+    printf '◆ work %dm\n' "$mins"
+else
+    printf '◆ work %dh%02dm\n' "$((mins / 60))" "$((mins % 60))"
+fi

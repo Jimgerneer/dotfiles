@@ -24,7 +24,7 @@ window#waybar {
 }
 
 /* Every module gets the same breathing room, so the bar reads as one object. */
-#workspaces, #submap, #window, #custom-audioout, #wireplumber,
+#workspaces, #submap, #window, #custom-work, #custom-audioout, #wireplumber,
 #custom-mic, #cpu, #memory, #temperature, #tray, #clock {
   padding: 0 11px;
   background-color: transparent;
@@ -54,6 +54,9 @@ window#waybar {
 window#waybar.empty #window { background-color: transparent; }
 
 #clock  { color: {{ $p.fg0 }}; font-weight: 600; }
+/* Blue, not the accent: this must not read as just another status field.
+   Distinct from #custom-audioout (accent) and #custom-mic (green). */
+#custom-work { color: {{ $p.blue }}; font-weight: 700; }
 #custom-audioout { color: {{ $p.accent }}; }
 #wireplumber     { color: {{ $p.fg1 }}; }
 #wireplumber.muted { color: {{ $p.fg2 }}; }

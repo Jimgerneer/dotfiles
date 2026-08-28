@@ -105,6 +105,8 @@
 #   mac-worksession  drives the Mac FROM tinos over ssh. On the Mac it would be
 #                    a script that ssh's to itself.
 .local/bin/mac-worksession
+#   work-indicator   a waybar module; there is no waybar on macOS
+.local/bin/work-indicator
 {{ end }}
 
 # ---------------------------------------------------------------------------

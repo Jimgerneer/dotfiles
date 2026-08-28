@@ -152,6 +152,14 @@ hl.bind(mod .. " + SHIFT + C",
 
 -- window management
 hl.bind(mod .. " + W",         hl.dsp.window.close())
+
+-- A work terminal, visibly labelled. `--title` FIXES the title: ghostty then
+-- ignores the OSC title escapes zellij sends, so it reads "WORK" for the life
+-- of the window instead of being overwritten by the remote session name.
+-- Verified 2026-08-27 -- a deliberate `printf "\033]0;..."` could not budge it.
+-- `fish -C` runs the command and THEN drops to an interactive prompt, so
+-- detaching from zellij leaves a usable shell rather than closing the window.
+hl.bind(mod .. " + M",         hl.dsp.exec_cmd("sh -c 'ghostty --title=\"WORK ▸ Mac\" -e fish -C \"work --start\"'"))
 hl.bind(mod .. " + SHIFT + W", hl.dsp.window.kill())
 hl.bind(mod .. " + F",         hl.dsp.window.fullscreen())
 hl.bind(mod .. " + S",         hl.dsp.window.float({ action = "toggle" }))
