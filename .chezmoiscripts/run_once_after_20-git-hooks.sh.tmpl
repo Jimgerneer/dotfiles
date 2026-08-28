@@ -7,14 +7,22 @@
 # OPEN: no scanning, and no indication you have none. On a public repo that is
 # the worst possible failure direction.
 #
-# ⚠️ `run_after_`, NOT `run_once_`, on purpose. run_once_ fires a single time per
-# machine and is then never reconsidered, so if the setting is later cleared --
-# a re-clone, a stray `git config --unset`, someone copying .git around -- it
-# would never notice. This is an idempotent one-line git call costing about a
-# millisecond, so running it on every apply buys self-healing for nothing.
+# `run_once_`, per chezmoi's own guidance: run_once_ is for one-time setup, and
+# plain `run_` is "generally discouraged since it breaks the declarative model".
+# An earlier version of this was a plain run_ script so it would self-heal; that
+# was the wrong instrument. It also left `chezmoi status` permanently showing a
+# pending entry, which erodes status as a glance-check.
 #
-# Silent unless it actually changes something: a script that prints on every
-# apply trains you to stop reading apply output.
+# run_once_ state is keyed on the SHA256 of the rendered CONTENT (scriptState
+# bucket), not on the path -- verified, a move with identical content does not
+# re-fire it. So on a fresh machine, where the state db is empty, this runs.
+#
+# ⚠️ The gap run_once_ leaves: the state db lives at
+# ~/.config/chezmoi/chezmoistate.boltdb, OUTSIDE the source repo. Deleting and
+# re-cloning the repo on a machine that has already run this will NOT re-run it,
+# and the new clone would have no hooksPath. That case is covered separately by
+# hooks.apply.pre in .chezmoi.toml.tmpl, which runs on every apply. Belt and
+# braces, each using the mechanism actually designed for its job.
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 

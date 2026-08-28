@@ -16,3 +16,25 @@ Defaults below are the work-machine values.
     ghosttyTheme = {{ $ghosttyTheme | quote }}
     zellijTheme = {{ $zellijTheme | quote }}
     theme = {{ $theme | quote }}
+
+{{/*
+Belt and braces for the git pre-commit hook.
+
+core.hooksPath lives in .git/config, which is not versioned, so a clone brings
+the hook file down wired to nothing -- silently, and failing OPEN. The
+run_once_after_20-git-hooks.sh script covers a fresh MACHINE. It cannot cover a
+re-clone on a machine that has already run it, because run_once_ state lives in
+~/.config/chezmoi/chezmoistate.boltdb, outside the repo, and survives deleting
+the source.
+
+This hook closes that gap. hooks are chezmoi's mechanism for "always, fast,
+idempotent" -- unlike a plain run_ script it produces no `chezmoi status` noise
+and does not break the declarative model. Note hooks run even under --dry-run,
+which is intended here: the setting is idempotent and wiring the hook is never
+the wrong thing to do.
+
+Guarded so a source dir that is not a git checkout is not an error.
+*/}}
+[hooks.apply.pre]
+    command = "sh"
+    args = ["-c", "cd '{{ .chezmoi.sourceDir }}' 2>/dev/null && git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true"]
