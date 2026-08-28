@@ -10,6 +10,10 @@ StartLimitBurst=5
 [Service]
 Type=simple
 ExecStart=%h/.local/bin/ts3-ptt-daemon
+# How long the mic stays open after the button is released. 0.30 is the daemon
+# default and what TS3's own PTT release delay was set to; raise it if the end
+# of sentences still clips. Uncomment to override:
+#Environment=TS3_PTT_RELEASE_DELAY=0.40
 Restart=always
 RestartSec=3
 # Read-only view of everything except what it needs. It talks to 127.0.0.1 and
