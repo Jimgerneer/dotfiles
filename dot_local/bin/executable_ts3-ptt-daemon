@@ -87,11 +87,19 @@ def find_device():
 class TS3:
     """ClientQuery client.
 
-    Line-oriented on purpose. An earlier version read fixed-size chunks and
-    guessed when a reply had ended, which slipped a reply out of step: the
-    answer to `auth` came back as the connection banner and every auth looked
-    refused. The protocol is newline-delimited and every command answers with a
-    line starting `error id=`, so read exactly that and nothing is ambiguous.
+    ⚠️ TS3 terminates lines with b"\\n\\r" -- newline THEN carriage return,
+    the reverse of CRLF. Two consequences, both of which cost real debugging:
+
+      1. Every line after the first arrives with a LEADING \\r, so a naive
+         startswith() never matches. Strip before comparing.
+      2. After a line is consumed at its \\n, a lone \\r is left in the
+         socket. select() then reports the socket readable forever -- one byte
+         really is pending -- while a blocking readline() waits for a \\n that
+         will not arrive until TS3 next speaks. That produced a five-second
+         timeout, a dropped session and a reconnect every eight seconds.
+
+    So: never call a blocking readline from the select loop. Buffer raw bytes
+    and hand out only COMPLETE lines.
     """
 
     BANNER_END = b"selected schandlerid"
@@ -99,55 +107,55 @@ class TS3:
     def __init__(self):
         self.sock = socket.create_connection((CQ_HOST, CQ_PORT), timeout=5)
         self.sock.settimeout(5)
-        self.f = self.sock.makefile("rwb", buffering=0)
-        self._read_banner()
+        self.buf = b""
+        self._await_line(lambda l: l.startswith(self.BANNER_END))
         self._cmd(f"auth apikey={api_key()}")
 
-    def _readline(self):
-        """One protocol line, with TeamSpeak's line ending normalised away.
-
-        ⚠️ TS3 ClientQuery terminates lines with b"\\n\\r" -- newline THEN
-        carriage return, the reverse of the usual CRLF. readline() splits on
-        \\n, so every line after the first arrives with a LEADING \\r and a
-        naive startswith() never matches. Verified against the raw banner
-        2026-08-27. Strip before comparing anything.
-        """
-        line = self.f.readline()
-        if not line:
+    def _fill(self):
+        data = self.sock.recv(4096)
+        if not data:
             raise ConnectionError("ClientQuery closed the connection")
-        return line.strip()
+        self.buf += data
 
-    def _read_banner(self):
+    def pop_line(self):
+        """A complete line if one is buffered, else None. Never blocks."""
+        if b"\n" not in self.buf:
+            return None
+        line, _, self.buf = self.buf.partition(b"\n")
+        return line.strip()          # strips the leading \r and any trailing
+
+    def drain(self):
+        """Read what is pending and yield whole lines. Call when select fires."""
+        self._fill()
+        while (line := self.pop_line()) is not None:
+            yield line
+
+    def _await_line(self, pred):
+        """Block (bounded by the socket timeout) until a line satisfies pred."""
         while True:
-            if self._readline().startswith(self.BANNER_END):
-                return
+            line = self.pop_line()
+            if line is None:
+                self._fill()
+                continue
+            if pred(line):
+                return line
 
     def _cmd(self, text):
-        self.f.write(text.encode() + b"\n")
-        while True:
-            line = self._readline()
-            if line.startswith(b"error id="):
-                if not line.startswith(b"error id=0"):
-                    raise RuntimeError(line.decode(errors="replace"))
-                return
+        self.sock.sendall(text.encode() + b"\n")
+        line = self._await_line(lambda l: l.startswith(b"error id="))
+        if not line.startswith(b"error id=0"):
+            raise RuntimeError(line.decode(errors="replace"))
 
     def subscribe(self):
-        """Ask TS3 to tell us when it changes things underneath us.
+        """Ask TS3 to announce state changes rather than polling for them.
 
         notifyconnectstatuschange fires as a server connection comes up, which
-        is exactly when TS3 resets the mic and left this daemon believing a
-        stale mute was still in force. Subscribing means we correct on the
-        event instead of discovering it on a timer.
-        schandlerid=0 means all server connection handlers, not just the
-        current tab.
+        is exactly when TS3 resets the mic. schandlerid=0 covers every
+        connection handler, not just the current tab.
         """
         for event in ("notifyconnectstatuschange",
                       "notifycurrentserverconnectionchanged"):
             self._cmd(f"clientnotifyregister schandlerid=0 event={event}")
-
-    def readline_nb(self):
-        """One line, called only when select() says the socket is readable."""
-        return self._readline()
 
     def mic(self, on):
         # client_input_deactivated: 0 = mic live, 1 = muted.
@@ -155,7 +163,6 @@ class TS3:
 
     def close(self):
         try:
-            self.f.close()
             self.sock.close()
         except OSError:
             pass
@@ -215,12 +222,17 @@ def session():
 
             for key, _ in events:
                 if key.data == "ts3":
-                    # A notification, or a stray reply. Either way TS3 spoke
-                    # unprompted, which is our cue to re-impose shortly --
-                    # debounced, because a connect emits several in a row.
-                    line = ts3.readline_nb()
-                    if line.startswith(b"notify"):
-                        settle_at = now + NOTIFY_SETTLE
+                    # TS3 spoke unprompted. drain() never blocks, which matters:
+                    # the dangling \r after every line keeps this socket
+                    # permanently "readable" with no complete line behind it.
+                    for line in ts3.drain():
+                        if line.startswith(b"notify"):
+                            # Impose immediately so the unmuted window is as
+                            # short as possible, AND arm a follow-up: a connect
+                            # emits several notifications and TS3 may reset the
+                            # mic again after this one, mid-handshake.
+                            apply(force=True)
+                            settle_at = now + NOTIFY_SETTLE
                     continue
 
                 for ev in key.fileobj.read():
