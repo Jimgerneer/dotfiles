@@ -138,6 +138,12 @@ function __work_start -d "Bring up a work session"
 end
 
 function __work_end -d "Tear a work session down"
+    # Bound to SUPER+SHIFT+M, where there is no terminal to print into, so say
+    # so with a notification too. Guarded: dunst is a Linux-desktop thing and
+    # this must not hard-fail without it. Same pattern as clip-pull-mac.
+    set -l was_open no
+    test -f $__work_state; and set was_open yes
+
     # Mac first, as requested -- and explicitly, so it is visible here rather
     # than only in the journal. deskflow-server's ExecStopPost repeats this on
     # stop; it is idempotent and its output goes to the journal, not here.
@@ -156,6 +162,16 @@ function __work_end -d "Tear a work session down"
     # the ssh -t exited; the session and its panes survive on the Mac.
     echo
     echo "work done"
+
+    if type -q notify-send
+        if test $was_open = yes
+            notify-send -t 2500 -a work "Work session ended" \
+                "Deskflow and the clipboard bridge are down. The zellij session is still alive on the Mac."
+        else
+            notify-send -t 2500 -a work "No work session was open" \
+                "Stopped anything that was still running anyway."
+        end
+    end
 end
 
 function __work_status -d "What is actually running"

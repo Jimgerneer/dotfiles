@@ -160,6 +160,13 @@ hl.bind(mod .. " + W",         hl.dsp.window.close())
 -- `fish -C` runs the command and THEN drops to an interactive prompt, so
 -- detaching from zellij leaves a usable shell rather than closing the window.
 hl.bind(mod .. " + M",         hl.dsp.exec_cmd("sh -c 'ghostty --title=\"WORK ▸ Mac\" -e fish -C \"work --start\"'"))
+-- Deliberately NOT a toggle on SUPER+M: opening a second work terminal by
+-- reflex would then silently tear the session down and drop mouse control
+-- mid-task.
+-- ⚠️ CTRL, not SHIFT: SUPER+SHIFT+M is already the audio mute toggle. Checking
+-- only single-letter binds missed that -- grep the SHIFT and CTRL forms too.
+-- No terminal to print into, so __work_end notifies as well as echoing.
+hl.bind(mod .. " + CTRL + M",  hl.dsp.exec_cmd("fish -c 'work --end'"))
 hl.bind(mod .. " + SHIFT + W", hl.dsp.window.kill())
 hl.bind(mod .. " + F",         hl.dsp.window.fullscreen())
 hl.bind(mod .. " + S",         hl.dsp.window.float({ action = "toggle" }))
