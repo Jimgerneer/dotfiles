@@ -1,0 +1,24 @@
+# Remind me to re-test the Claude Code mouse-paste workaround after an upgrade.
+#
+# Background: with mouse reporting on, scrolling in the Claude Code pane injects
+# the PRIMARY selection into the prompt. Worked around with
+# CLAUDE_CODE_DISABLE_MOUSE=1, which costs mouse support inside Claude Code.
+# Last confirmed broken on 2.1.241-1 (2026-08-28).
+#
+# claude-code is an AUR package, so it only moves when yay -Syu runs -- which is
+# exactly when this fires. A workaround with no exit criteria becomes permanent.
+#
+# NOT managed by chezmoi: it lives in /etc, outside $HOME. Versioned here and
+# installed by hand; see .system/README.md.
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = claude-code
+
+[Action]
+Description = Reminder to re-test the Claude Code mouse-paste workaround...
+Depends = bash
+When = PostTransaction
+Exec = /usr/bin/bash -c 'printf "\n  claude-code changed. Re-test the mouse-paste workaround (30s):\n\n    printf ZZTEST | wl-copy --primary\n    env -u CLAUDE_CODE_DISABLE_MOUSE claude\n    (scroll up/down ~20 ticks, in a zellij pane)\n\n  ZZTEST appears  -> still broken, nothing to do.\n  nothing appears -> FIXED: delete ~/.config/fish/conf.d/claude-code.fish\n                     then run chezmoi apply.\n\n  Full notes in that file, and in .system/README.md.\n\n"'
