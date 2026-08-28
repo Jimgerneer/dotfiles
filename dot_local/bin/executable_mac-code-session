@@ -1,23 +1,58 @@
 #!/bin/bash
-# 🍎 MAC ONLY. Opens Ghostty at login with the `Code` zellij session attached,
-# creating (or resurrecting) it if it is not there.
+# 🍎 MAC ONLY. Opens Ghostty with the `Code` zellij session attached, creating
+# or resurrecting it if needed. Run at login by
+# ~/Library/LaunchAgents/local.code-session.plist, and safe to run by hand.
 #
 # WHY THIS EXISTS, and why it must be a GUI launch:
 #   A zellij session created over SSH is born in macOS's "Background" security
-#   session and has NO login-keychain access, so `gh` reports its token as
-#   invalid and gh-dash breaks. `open -na` hands off to launchd, which starts
-#   Ghostty in the Aqua session -- and the zellij server Ghostty spawns inherits
-#   that. So the session created here is the GOOD kind, and `work --start` on
-#   tinos can simply attach to it.
-#   See phase-6-remote-mac.md and the note in ~/.config/fish/functions/work.fish.
+#   session and has NO login-keychain access, so `gh` reports its token invalid
+#   and gh-dash breaks. `open -na` hands off to launchd, which starts Ghostty in
+#   the Aqua session, and the zellij server Ghostty spawns inherits that. So the
+#   session created here is the GOOD kind, and `work --start` on tinos can just
+#   attach to it. See phase-6-remote-mac.md.
+#
+# ⚠️ WHY IT RETRIES: at login this raced. Observed 2026-08-27 -- after a Mac
+#   restart the agent ran, exited 0, Ghostty was running, and `Code` was still
+#   EXITED. `open -na` fired before the Aqua session could service it, and
+#   nothing noticed because `open` returns 0 either way. So do not trust the
+#   launch: verify the session is actually live, and try again if it is not.
 set -uo pipefail
 
 SESSION=Code
 DIR="$HOME/Code"
 ZELLIJ=/opt/homebrew/bin/zellij
 
-# `attach --create` covers all three states: live (attach), EXITED (resurrect),
-# absent (create). Run under sh -c so the cwd is set before zellij starts --
-# `open` does not pass a working directory to the app.
-open -na Ghostty.app --args -e /bin/sh -c \
-    "cd '$DIR' 2>/dev/null || cd; exec '$ZELLIJ' attach --create '$SESSION'"
+log() { printf '%s %s\n' "$(date '+%H:%M:%S')" "$*"; }
+
+# A session is only useful if it is LIVE. `list-sessions -n` keeps the
+# "(EXITED - attach to resurrect)" marker, which is exactly what we filter on --
+# --short would drop it and an EXITED session would read as success.
+is_live() {
+    "$ZELLIJ" list-sessions -n 2>/dev/null \
+        | grep -E "^${SESSION}[[:space:]]" | grep -qv EXITED
+}
+
+# Give the login sequence a moment to bring up the GUI session before the first
+# attempt. Costs nothing -- this is a background agent, nobody is waiting.
+sleep 5
+
+for attempt in 1 2 3; do
+    if is_live; then
+        log "session '$SESSION' is live (attempt $attempt)"
+        exit 0
+    fi
+    log "attempt $attempt: launching Ghostty"
+    # `-e` runs the command; sh -c sets the cwd first, because `open` does not
+    # pass a working directory to the app. `attach --create` covers all three
+    # states: live (attach), EXITED (resurrect), absent (create).
+    open -na Ghostty.app --args -e /bin/sh -c \
+        "cd '$DIR' 2>/dev/null || cd; exec '$ZELLIJ' attach --create '$SESSION'"
+    sleep 6
+done
+
+if is_live; then
+    log "session '$SESSION' is live"
+else
+    log "FAILED: '$SESSION' still not live after 3 attempts"
+    exit 1
+fi
