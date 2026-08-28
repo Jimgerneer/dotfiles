@@ -107,6 +107,8 @@
 .local/bin/mac-worksession
 #   work-indicator   a waybar module; there is no waybar on macOS
 .local/bin/work-indicator
+#   ts3-ptt-daemon   reads /dev/input and talks to a local TS3; Linux-only
+.local/bin/ts3-ptt-daemon
 {{ end }}
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""Global push-to-talk for TeamSpeak 3 on Wayland.
+
+TS3's own global hotkey uses XGrabKey on the X11 root window. XWayland has no
+root window that receives system-wide input, so the hotkey only fires when TS3
+is focused or when a game happens to route the key there. There is no TS3-side
+fix.
+
+This bypasses the display server entirely: read the button from /dev/input,
+which sits BELOW the compositor, and toggle the mic over TS3's own ClientQuery
+API. That works focused or not, in fullscreen games, and inside a gamescope
+keyboard grab -- because nothing here touches X11 or Wayland.
+
+Set TS3 to CONTINUOUS TRANSMISSION, not Push-to-Talk. This daemon does the
+gating via client_input_deactivated; TS3's own PTT would fight it.
+
+Reads the API key straight out of ~/.ts3client/clientquery.ini at runtime, so
+the secret is never copied into the dotfiles repo.
+"""
+import errno
+import re
+import selectors
+import socket
+import sys
+import time
+from pathlib import Path
+
+import evdev
+from evdev import ecodes
+
+DEVICE_NAME = "Logitech G502 X PLUS"   # matched by name, not a path: the event
+                                       # number moves between boots
+BUTTON = ecodes.BTN_EXTRA              # 276 -- the thumb button
+CQ_HOST, CQ_PORT = "127.0.0.1", 25639
+INI = Path.home() / ".ts3client" / "clientquery.ini"
+RETRY = 3.0
+
+
+def log(msg):
+    print(f"{time.strftime('%H:%M:%S')} {msg}", flush=True)
+
+
+def api_key():
+    """Read api_key from clientquery.ini. Never copied anywhere else.
+
+    Deliberately a regex rather than configparser. The file DOES carry a
+    section header ([General] as of TS3 3.6.2) -- an earlier version of this
+    assumed it did not, injected its own section, and then looked for the key
+    in that empty section. Matching the line directly does not care whether a
+    header exists, what it is called, or whether TS3 renames it later. It also
+    sidesteps configparser's %-interpolation, which would choke on a key
+    containing a percent sign.
+    """
+    for line in INI.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = re.match(r"\s*api_key\s*=\s*(.+?)\s*$", line)
+        if m and m.group(1):
+            return m.group(1)
+    raise RuntimeError(f"no api_key found in {INI}")
+
+
+def find_device():
+    for path in evdev.list_devices():
+        try:
+            d = evdev.InputDevice(path)
+        except OSError:
+            continue
+        if d.name == DEVICE_NAME and BUTTON in d.capabilities().get(ecodes.EV_KEY, []):
+            return d
+        d.close()
+    return None
+
+
+class TS3:
+    """ClientQuery client.
+
+    Line-oriented on purpose. An earlier version read fixed-size chunks and
+    guessed when a reply had ended, which slipped a reply out of step: the
+    answer to `auth` came back as the connection banner and every auth looked
+    refused. The protocol is newline-delimited and every command answers with a
+    line starting `error id=`, so read exactly that and nothing is ambiguous.
+    """
+
+    BANNER_END = b"selected schandlerid"
+
+    def __init__(self):
+        self.sock = socket.create_connection((CQ_HOST, CQ_PORT), timeout=5)
+        self.sock.settimeout(5)
+        self.f = self.sock.makefile("rwb", buffering=0)
+        self._read_banner()
+        self._cmd(f"auth apikey={api_key()}")
+
+    def _readline(self):
+        """One protocol line, with TeamSpeak's line ending normalised away.
+
+        ⚠️ TS3 ClientQuery terminates lines with b"\\n\\r" -- newline THEN
+        carriage return, the reverse of the usual CRLF. readline() splits on
+        \\n, so every line after the first arrives with a LEADING \\r and a
+        naive startswith() never matches. Verified against the raw banner
+        2026-08-27. Strip before comparing anything.
+        """
+        line = self.f.readline()
+        if not line:
+            raise ConnectionError("ClientQuery closed the connection")
+        return line.strip()
+
+    def _read_banner(self):
+        while True:
+            if self._readline().startswith(self.BANNER_END):
+                return
+
+    def _cmd(self, text):
+        self.f.write(text.encode() + b"\n")
+        while True:
+            line = self._readline()
+            if line.startswith(b"error id="):
+                if not line.startswith(b"error id=0"):
+                    raise RuntimeError(line.decode(errors="replace"))
+                return
+
+    def mic(self, on):
+        # client_input_deactivated: 0 = mic live, 1 = muted.
+        self._cmd(f"clientupdate client_input_deactivated={0 if on else 1}")
+
+    def close(self):
+        try:
+            self.f.close()
+            self.sock.close()
+        except OSError:
+            pass
+
+
+def session():
+    dev = find_device()
+    if dev is None:
+        raise FileNotFoundError(f"{DEVICE_NAME} not present")
+    log(f"reading {dev.path} ({dev.name})")
+
+    ts3 = TS3()
+    log("ClientQuery authenticated")
+    ts3.mic(False)          # known state: start muted
+
+    try:
+        sel = selectors.DefaultSelector()
+        sel.register(dev, selectors.EVENT_READ)
+        while True:
+            for key, _ in sel.select(timeout=None):
+                for ev in key.fileobj.read():
+                    if ev.type == ecodes.EV_KEY and ev.code == BUTTON:
+                        if ev.value == 1:
+                            ts3.mic(True)
+                        elif ev.value == 0:
+                            ts3.mic(False)
+    finally:
+        try:
+            ts3.mic(False)   # never leave the mic hot on the way out
+        except OSError:
+            pass
+        ts3.close()
+        dev.close()
+
+
+def main():
+    while True:
+        try:
+            session()
+        except FileNotFoundError as e:
+            log(f"waiting: {e}")            # mouse asleep or unplugged
+        except ConnectionRefusedError:
+            log("waiting: TeamSpeak not running (ClientQuery closed)")
+        except OSError as e:
+            if e.errno == errno.ENODEV:
+                log("device went away (mouse slept?)")
+            else:
+                log(f"i/o error: {e}")
+        except Exception as e:                       # noqa: BLE001
+            log(f"error: {type(e).__name__}: {e}")
+        time.sleep(RETRY)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)

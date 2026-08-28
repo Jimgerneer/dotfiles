@@ -1,0 +1,25 @@
+[Unit]
+Description=TeamSpeak 3 global push-to-talk (reads the mouse below the compositor)
+Documentation=file://%h/Documents/arch-rebuild/phase-5-gaming.md
+# Not tied to graphical-session: the whole point is that it does not depend on
+# a display server. It only needs the input device and TS3's local socket, and
+# it supervises both itself.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/ts3-ptt-daemon
+Restart=always
+RestartSec=3
+# Read-only view of everything except what it needs. It talks to 127.0.0.1 and
+# reads one input device; it has no business writing anywhere.
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+RestrictAddressFamilies=AF_INET AF_UNIX
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=default.target
