@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Start / stop the work Mac's side of a session: the Deskflow CLIENT, and a
+# caffeinate that stops the Mac sleeping while we are using it.
+#
+# Called by `work --start` / `work --end`, and by deskflow-server.service's
+# ExecStopPost so logout, reboot and shutdown tear the Mac down too. That last
+# path is why this is a script rather than inline in the unit.
+set -uo pipefail
+
+# Do NOT use `set -e`. Every failure here is non-fatal by design -- a Mac that
+# is asleep or off the LAN has nothing to stop, and that must not fail the
+# systemd unit or abort `work --end` half way through.
+
+: "${SSH_AUTH_SOCK:=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket}"
+export SSH_AUTH_SOCK
+
+# ⚠️ THE MAC'S LOGIN SHELL IS FISH (verified 2026-08-27). `ssh mac '<string>'`
+# is parsed by fish, not bash, so `( cmd & )` is read as a COMMAND SUBSTITUTION
+# and fails with "command substitutions not allowed here". Anything beyond a
+# single simple command must therefore be piped to `bash -s` on stdin, which
+# works regardless of the remote login shell. Do not "simplify" this back into
+# a quoted command string.
+remote() { ssh -o BatchMode=yes -o ConnectTimeout=5 mac bash -s; }
+
+# Distinctive enough that the stop side matches only ours, never some other
+# caffeinate the Mac runs for its own reasons. -t 43200 is a 12h cap so a
+# session left open overnight stops holding the Mac awake by itself.
+# Kept as a literal in each heredoc: ssh flattens its argv, so passing this
+# through as an argument would lose the quoting around the spaces.
+
+usage() { echo "usage: mac-worksession start|stop|status" >&2; exit 2; }
+
+case "${1:-}" in
+start)
+    # `open -a` hands off to launchd inside the GUI session, so TCC attributes
+    # Accessibility to Deskflow.app. Exec'ing deskflow-core directly over ssh
+    # attributes it to sshd instead and it cannot inject input at all.
+    if remote <<'REMOTE'
+open -a Deskflow || exit 1
+pgrep -f 'caffeinate -dis -t 43200' >/dev/null 2>&1 \
+    || (nohup caffeinate -dis -t 43200 >/dev/null 2>&1 &)
+REMOTE
+    then
+        echo "  mac: Deskflow client started, sleep inhibited (12h cap)"
+    else
+        echo "  mac: could not start (asleep? off the LAN?)" >&2
+        exit 1
+    fi
+    ;;
+stop)
+    # osascript quit is a clean Cmd-Q. The GUI owns deskflow-core as a child,
+    # so quitting the app takes the client with it. Verified 2026-08-27.
+    if remote <<'REMOTE'
+osascript -e 'quit app "Deskflow"' >/dev/null 2>&1 || true
+pkill -f 'caffeinate -dis -t 43200' >/dev/null 2>&1 || true
+exit 0
+REMOTE
+    then
+        echo "  mac: Deskflow quit, sleep re-enabled"
+    else
+        echo "  mac: unreachable -- nothing stopped (fine if it is asleep)"
+    fi
+    ;;
+status)
+    remote <<'REMOTE' || echo "  mac: unreachable"
+if pgrep -qf 'Deskflow.app/Contents/MacOS/Deskflow'; then
+    echo "  mac: Deskflow        RUNNING"
+else
+    echo "  mac: Deskflow        stopped"
+fi
+if pgrep -qf 'caffeinate -dis -t 43200'; then
+    echo "  mac: sleep           INHIBITED"
+else
+    echo "  mac: sleep           normal"
+fi
+REMOTE
+    ;;
+*) usage ;;
+esac

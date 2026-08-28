@@ -1,0 +1,30 @@
+[Unit]
+Description=Deskflow input-sharing server (tinos is the SERVER)
+Documentation=file://%h/Documents/arch-rebuild/phase-6-remote-mac.md
+# Needs a Wayland session -- input is captured through the InputCapture portal.
+PartOf=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+# Ordered after the agent so ExecStopPost below still has a working ssh when
+# this is stopped by logout or shutdown: stop order is the reverse of start
+# order, so "After" here means "stopped before" the agent goes away.
+After=ssh-agent.service
+# ⚠️ [Unit] keys, NOT [Service] -- systemd ignores them silently in [Service]
+# and only `systemd-analyze verify` says so. Same trap as clip-push-mac.service.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+# The Qt GUI is only a launcher; THIS is the process that listens on 24800.
+# Verified 2026-08-26. Never run the GUI at the same time -- two servers fight
+# over the port. Launch the GUI only to debug, and stop this first.
+ExecStart=/usr/bin/deskflow-core server
+Restart=on-failure
+RestartSec=3
+# Tear the far end down whenever this stops, for ANY reason: `work --end`,
+# logout, reboot, shutdown. Leading '-' so a sleeping or absent Mac does not
+# mark the unit failed.
+ExecStopPost=-%h/.local/bin/mac-worksession stop
+
+# ⚠️ NO [Install] SECTION, ON PURPOSE -- started by `work --start`, not at login.

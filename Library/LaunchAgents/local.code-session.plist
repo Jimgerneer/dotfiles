@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  🍎 MAC ONLY. Opens Ghostty with the `Code` zellij session at login.
+
+  Label is deliberately generic: this repo is PUBLIC, and a reverse-DNS label
+  built from a username would publish it for no benefit.
+
+  RunAtLoad only, no KeepAlive: a one-shot at login, not a daemon. Kept alive,
+  closing the window would reopen it forever.
+
+  Load / unload / check:
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/local.code-session.plist
+    launchctl bootout   gui/$(id -u)/local.code-session
+    launchctl print     gui/$(id -u)/local.code-session
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.code-session</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-lc</string>
+        <string>exec "$HOME/.local/bin/mac-code-session"</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/code-session.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/code-session.log</string>
+</dict>
+</plist>

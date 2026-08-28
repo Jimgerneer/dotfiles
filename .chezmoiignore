@@ -102,4 +102,19 @@
 .local/share/dbus-1
 .local/bin/clip-push-mac
 .local/bin/clip-pull-mac
+#   mac-worksession  drives the Mac FROM tinos over ssh. On the Mac it would be
+#                    a script that ssh's to itself.
+.local/bin/mac-worksession
+{{ end }}
+
+# ---------------------------------------------------------------------------
+# Mac-only. Added 2026-08-27. macOS launchd + the Ghostty login session; there
+# is no ~/Library on Linux and nothing here can run there.
+#   Library/LaunchAgents/local.code-session.plist  opens Ghostty at login
+#   .local/bin/mac-code-session                    what that plist runs
+# Both create the `Code` zellij session in the Aqua security session, which is
+# the only way it gets login-keychain access -- see phase-6-remote-mac.md.
+{{ if eq .chezmoi.hostname "tinos" }}
+Library
+.local/bin/mac-code-session
 {{ end }}

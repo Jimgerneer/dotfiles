@@ -20,5 +20,10 @@ ExecStart=%h/.local/bin/clip-push-mac
 Restart=always
 RestartSec=3
 
-[Install]
-WantedBy=graphical-session.target
+# ⚠️ NO [Install] SECTION, ON PURPOSE -- started by `work --start` and stopped
+# by `work --end`, not by logging in. It pushes the tinos clipboard to the Mac
+# CONTINUOUSLY, and the Mac may keep clipboard history on disk, so running it
+# outside work hours is a standing exposure for no benefit. See the SECURITY
+# section of phase-6-remote-mac.md.
+#
+# PartOf=graphical-session.target above still stops it when the session ends.

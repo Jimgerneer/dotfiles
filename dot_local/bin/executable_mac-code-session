@@ -1,0 +1,23 @@
+#!/bin/bash
+# 🍎 MAC ONLY. Opens Ghostty at login with the `Code` zellij session attached,
+# creating (or resurrecting) it if it is not there.
+#
+# WHY THIS EXISTS, and why it must be a GUI launch:
+#   A zellij session created over SSH is born in macOS's "Background" security
+#   session and has NO login-keychain access, so `gh` reports its token as
+#   invalid and gh-dash breaks. `open -na` hands off to launchd, which starts
+#   Ghostty in the Aqua session -- and the zellij server Ghostty spawns inherits
+#   that. So the session created here is the GOOD kind, and `work --start` on
+#   tinos can simply attach to it.
+#   See phase-6-remote-mac.md and the note in ~/.config/fish/functions/work.fish.
+set -uo pipefail
+
+SESSION=Code
+DIR="$HOME/Code"
+ZELLIJ=/opt/homebrew/bin/zellij
+
+# `attach --create` covers all three states: live (attach), EXITED (resurrect),
+# absent (create). Run under sh -c so the cwd is set before zellij starts --
+# `open` does not pass a working directory to the app.
+open -na Ghostty.app --args -e /bin/sh -c \
+    "cd '$DIR' 2>/dev/null || cd; exec '$ZELLIJ' attach --create '$SESSION'"
