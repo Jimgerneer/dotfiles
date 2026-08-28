@@ -238,6 +238,24 @@ def session():
                 for ev in key.fileobj.read():
                     if ev.type != ecodes.EV_KEY or ev.code != BUTTON:
                         continue
+                    # value 2 is KERNEL AUTOREPEAT. Drop it explicitly.
+                    #
+                    # This mouse exposes macro keys, so it registers as a
+                    # keyboard as well as a mouse (Handlers=sysrq kbd leds
+                    # event8 mouse0). EV_REP is a property of the whole evdev
+                    # node, so the kernel repeats BTN_* exactly as it repeats
+                    # KEY_*. Measured 2026-08-28: one 3s hold emits 1 press,
+                    # ~70 repeats and 1 release, at the 250ms/33ms default.
+                    # libinput discards value 2, which is why nothing else on
+                    # the desktop ever notices -- 446 repeats produced 0 extra
+                    # button events there.
+                    #
+                    # ⚠️ Do NOT "simplify" the checks below to `if ev.value:`.
+                    # That reads autorepeat as a fresh press and would re-arm
+                    # desired/apply() ~30x a second for as long as the button is
+                    # held. The explicit == comparisons are load-bearing.
+                    if ev.value == 2:
+                        continue
                     if ev.value == 1:
                         mute_at = None
                         desired = True
