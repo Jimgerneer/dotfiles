@@ -32,5 +32,28 @@
 # Narrower alternative if scroll-to-scrollback inside Claude Code is missed:
 # CLAUDE_CODE_DISABLE_MOUSE_CLICKS, which leaves the wheel alone.
 # ─────────────────────────────────────────────────────────────────────────────
+# ── HOW TO KNOW WHEN THIS CAN BE REMOVED ─────────────────────────────────────
+# Last confirmed BROKEN on: claude-code 2.1.241-1  (2026-08-28)
+#
+# claude-code is an AUR package, so it only changes when you run `yay -Syu`.
+# That upgrade is the trigger: whenever the version moves, spend 30 seconds on
+# the test below. Compare against the version above with `claude --version`.
+#
+# THE TEST (run in a zellij pane, since the bug needs mouse reporting):
+#
+#   printf 'ZZTEST' | wl-copy --primary
+#   env -u CLAUDE_CODE_DISABLE_MOUSE claude
+#   # ...then scroll the wheel up and down ~20 ticks in the prompt.
+#
+#   ZZTEST appears  -> still broken. Quit, carry on, update the version above.
+#   nothing appears -> FIXED. Delete this file and `chezmoi apply`.
+#
+# ⚠️ `env -u` is required and `set -e` is not enough: this file sets the variable
+# globally in EVERY fish shell, so a nested fish re-sets it. `env -u ... claude`
+# works because claude is a binary, not a fish shell, so conf.d never runs for it.
+#
+# When it is finally fixed, removing this file restores mouse support inside
+# Claude Code (scroll, click-to-position). Nothing else depends on it.
+# ─────────────────────────────────────────────────────────────────────────────
 set -gx CLAUDE_CODE_DISABLE_MOUSE 1
 {{- end }}
