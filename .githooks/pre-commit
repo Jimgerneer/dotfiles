@@ -1,64 +1,69 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# pre-commit: refuse to commit secret-shaped content.
+# pre-commit: block secrets before they reach this PUBLIC repo.
 #
-# This repo is PUBLIC. A credential pushed here is compromised the instant it
-# lands -- it must be ROTATED, not merely deleted, because history, forks and
-# scrapers keep it. That asymmetry is why this is a hook and not a habit.
+# A credential pushed here is compromised the instant it lands -- it must be
+# ROTATED, not merely deleted, because history, forks and scrapers keep it.
+# That asymmetry is why this is a hook and not a habit.
 #
-# Deliberately dependency-free: gitleaks is not installed on tinos or the Mac,
-# and a hook that only works where a tool happens to be present is a hook you
-# cannot rely on. If you later `brew/pacman install gitleaks`, run it in CI or
-# by hand -- this stays as the always-there floor.
+# Detection is delegated to gitleaks (~150 maintained rules plus entropy
+# analysis). An earlier version of this hook hand-rolled 8 regexes; it had two
+# portability bugs within a day -- the pattern list began with "-----BEGIN" so
+# grep parsed it as options and the scan silently never ran, and it used \b,
+# which is a GNU extension the Mac's BSD grep does not support. Hand-rolled
+# patterns also rot: every new token format needs someone to notice and edit.
+# gitleaks is a static Go binary with no runtime dependencies, so there is
+# nothing to be portable about.
 #
-# Versioned via core.hooksPath = .githooks, so it applies on every machine that
-# clones this repo. chezmoi ignores dot-prefixed entries in the source dir, so
-# this directory is git state only and is never deployed anywhere.
+# gitleaks is declared in .packages/ for both machines. It is NOT optional:
+# a missing scanner fails the commit rather than quietly letting it through.
 #
 # Escape hatch:  git commit --no-verify
 # ─────────────────────────────────────────────────────────────────────────────
 set -uo pipefail
 
-staged=$(git diff --cached --name-only --diff-filter=ACM)
-[ -z "$staged" ] && exit 0
+# Homebrew's bin is absent from a non-interactive shell's PATH on macOS, and
+# git hooks run non-interactively. Without this the Mac hard-fails on every
+# commit claiming gitleaks is missing when it is installed.
+case ":$PATH:" in
+    *:/opt/homebrew/bin:*) ;;
+    *) PATH="/opt/homebrew/bin:$PATH" ;;
+esac
+export PATH
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+    echo "pre-commit: gitleaks not found -- refusing to commit." >&2
+    echo >&2
+    echo "  This repo is public, so the scan is not optional." >&2
+    echo "    Arch: sudo pacman -S gitleaks" >&2
+    echo "    mac : brew install gitleaks" >&2
+    echo "  Both are listed in .packages/." >&2
+    echo >&2
+    echo "  If you are certain: git commit --no-verify" >&2
+    exit 1
+fi
 
 status=0
 
-# ── 1. Files that should never be committed at all, whatever they contain ────
-badnames=$(printf '%s\n' "$staged" | grep -E '(^|/)[^/]*\.(pem|key|p12|pfx|env)$|(^|/)\.env($|\.)|(^|/)id_(rsa|ed25519|ecdsa)$' || true)
+# ── Filenames that are never safe, whatever they contain ─────────────────────
+# This is NOT redundant with gitleaks. Measured 2026-08-28 against 8.30.1:
+# gitleaks is content-based, and an id_rsa / .pem / .env holding innocuous text
+# sails straight past it. Those are exactly the files you never want committed.
+badnames=$(git diff --cached --name-only --diff-filter=ACM \
+           | grep -E '(^|/)[^/]*\.(pem|key|p12|pfx|env)$|(^|/)\.env($|\.)|(^|/)id_(rsa|ed25519|ecdsa)$' || true)
 if [ -n "$badnames" ]; then
     echo "pre-commit: refusing -- these filenames are never safe in a public repo:" >&2
     printf '  %s\n' $badnames >&2
     status=1
 fi
 
-# ── 2. Secret-shaped ADDED lines ─────────────────────────────────────────────
-# Added lines only: pre-existing text is not this hook's business, and scanning
-# whole files would fire on documentation that merely mentions these words.
-patterns='-----BEGIN [A-Z ]*PRIVATE KEY-----'
-patterns+='|gh[pousr]_[A-Za-z0-9]{16,}'
-patterns+='|github_pat_[A-Za-z0-9_]{20,}'
-patterns+='|xox[baprs]-[A-Za-z0-9-]{10,}'
-patterns+='|AKIA[0-9A-Z]{16}'
-patterns+='|sk-(ant-)?[A-Za-z0-9_-]{20,}'
-patterns+='|glpat-[A-Za-z0-9_-]{16,}'
-patterns+='|AIza[0-9A-Za-z_-]{30,}'
-# NB: no \b anywhere -- that is a GNU grep extension and the Mac has BSD grep.
-# The token prefixes (ghp_, AKIA, xox, sk-, glpat-, AIza) are distinctive enough.
-# Generic assignment: KEY = "longvalue". Requires a real literal immediately
-# after the operator, so `api_key\s*=\s*` inside a regex string does not match.
-patterns+='|(api[_-]?key|apikey|secret|passwd|password|token|bearer)[[:space:]]*[=:][[:space:]]*["'"'"']?[A-Za-z0-9/+_-]{16,}'
-
-hits=$(git diff --cached --unified=0 -- . \
-       | grep -E '^\+' | grep -vE '^\+\+\+' \
-       | grep -inE -e "$patterns" || true)   # -e: $patterns starts with "-----BEGIN"
-
-if [ -n "$hits" ]; then
-    echo "pre-commit: refusing -- secret-shaped content in staged changes:" >&2
-    printf '%s\n' "$hits" | head -20 | sed 's/^/  /' >&2
+# ── Content ──────────────────────────────────────────────────────────────────
+# `git --staged` is the pre-commit form in gitleaks 8.30. The older
+# `gitleaks protect` was REMOVED in 8.x -- do not "restore" it.
+if ! gitleaks git --staged --redact --no-banner; then
     echo >&2
-    echo "  If this is a false positive: git commit --no-verify" >&2
-    echo "  If it is real: do NOT just unstage it. Rotate the credential." >&2
+    echo "pre-commit: gitleaks found secrets in the staged changes (above)." >&2
+    echo "  Do NOT just unstage. If it is real, ROTATE the credential." >&2
     status=1
 fi
 
