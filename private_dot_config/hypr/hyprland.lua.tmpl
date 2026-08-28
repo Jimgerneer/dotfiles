@@ -19,8 +19,8 @@ local accent   = col("{{ $p.accent }}")
 local inactive = col("{{ $p.bg3 }}")
 
 local terminal  = "ghostty"
-local launcher  = "{{ .chezmoi.homeDir }}/.config/rofi/launchers/launcher.sh"
-local powermenu = "{{ .chezmoi.homeDir }}/.config/rofi/power/powermenu.sh"
+local launcher  = "noctalia msg panel-toggle launcher"
+local powermenu = "noctalia msg panel-toggle session"
 local wallpaper = "{{ $wp }}"
 
 ------------------
@@ -111,10 +111,8 @@ hl.animation({ leaf = "border",     enabled = true, speed = 6, bezier = "snappy"
 ---- AUTOSTART ----
 -------------------
 hl.on("hyprland.start", function()
-    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("noctalia")
     hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
-    hl.exec_cmd("waybar")
-    hl.exec_cmd("dunst")
     hl.exec_cmd("wl-paste --watch cliphist store")
     hl.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/audio-out apply")
     -- hyprpaper's own config does not reliably apply at session start: it
@@ -128,7 +126,6 @@ hl.on("hyprland.start", function()
     -- literal text, and there is no `wallpaper` variable in Lua scope either.
     -- hyprpaper received it verbatim and answered `bad path: ' .. wallpaper .. '`,
     -- which is silent at session start because nothing surfaces exec_cmd stderr.
-    hl.exec_cmd("sh -c 'S=\"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.hyprpaper.sock\"; for i in $(seq 50); do [ -S \"$S\" ] && break; sleep 0.2; done; sleep 0.5; hyprctl hyprpaper wallpaper \",{{ $wp }}\"'")
 end)
 
 ---------------------
@@ -148,7 +145,7 @@ hl.bind(mod .. " + V",      hl.dsp.exec_cmd(terminal .. " --class=wiremix -e wir
 hl.bind(mod .. " + SHIFT + V", hl.dsp.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/clip-pull-mac"))
 hl.bind(mod .. " + ALT + Q", hl.dsp.exit())
 hl.bind(mod .. " + SHIFT + C",
-        hl.dsp.exec_cmd("sh -c 'cliphist list | rofi -dmenu | cliphist decode | wl-copy'"))
+        hl.dsp.exec_cmd("noctalia msg panel-toggle clipboard"))
 
 -- window management
 hl.bind(mod .. " + W",         hl.dsp.window.close())

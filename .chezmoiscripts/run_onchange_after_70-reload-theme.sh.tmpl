@@ -37,19 +37,29 @@ if pgrep -x Thunar >/dev/null 2>&1; then
     say thunar "live (GTK watches gtk.css)"
 fi
 
-# --- rofi: nothing to signal. It is not a daemon -- every invocation parses
-#     its .rasi fresh, so the next launcher press is already re-themed. --------
-say rofi "no action needed (re-reads .rasi on every launch)"
-
-# --- dunst ------------------------------------------------------------------
-if pgrep -x dunst >/dev/null 2>&1; then
-    if command -v dunstctl >/dev/null 2>&1; then
-        dunstctl reload >/dev/null 2>&1 && say dunst "reloaded"
-    else
-        pkill -HUP -x dunst && say dunst "SIGHUP sent"
-    fi
+# --- noctalia -----------------------------------------------------------------
+#     Bar, launcher, notifications, clipboard and OSD in one process. Replaced
+#     waybar + rofi + dunst + hyprpaper on 2026-08-28.
+#
+#     The palette reaches it as a RENDERED FILE -- .config/noctalia/palettes/
+#     active.json, written by this repo. Noctalia also ships its own template
+#     engine with 55 community templates covering ghostty, zellij, tmux, bat
+#     and more, all of which chezmoi ALREADY renders from this same palette.
+#     Two engines writing one file is exactly the version skew palettes.toml
+#     warns about, so `noctalia msg templates-apply` stays OFF and chezmoi
+#     remains the only writer. Do not enable it.
+#
+#     Why set the scheme on every run rather than once: Noctalia owns its
+#     settings.toml and rewrites it from memory, discarding outside edits
+#     (verified 2026-08-28). color-scheme-set is idempotent, so re-asserting
+#     the selection here is cheap and survives that.
+if pgrep -x noctalia >/dev/null 2>&1; then
+    noctalia msg color-scheme-set custom active >/dev/null 2>&1 \
+        && say noctalia "palette -> custom/active"
+    noctalia msg config-reload >/dev/null 2>&1 \
+        && say noctalia "reloaded in place"
 else
-    say dunst "not running"
+    say noctalia "not running"
 fi
 
 # --- TeamSpeak 3: Qt reads the .qss once at startup. Nothing to signal. ------

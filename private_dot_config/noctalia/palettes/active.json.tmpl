@@ -1,0 +1,58 @@
+{{/* Noctalia palette, rendered from .chezmoidata/palettes.toml.
+
+     The FILENAME is deliberately constant ("active"), not the palette name.
+     Noctalia stores its selection in its own settings.toml -- which this repo
+     does not manage, because Noctalia rewrites that file from memory while it
+     runs and silently discards outside edits (verified 2026-08-28: an appended
+     [lockscreen] block vanished on the next write). Keeping the name fixed
+     means `color-scheme-set custom active` is a one-time act; afterwards a
+     palette switch only changes THIS file's contents, and Noctalia is told to
+     re-read it by the 70-reload-theme hook.
+
+     Role mapping follows the NEUTRAL CORE, COLOURED PERIPHERY rule from
+     palettes.toml: mSurface/mSurfaceVariant stay desaturated ground, colour
+     appears only in mPrimary/mTertiary/mError.
+
+     Noctalia requires both dark and light blocks with identical structure.
+     Every palette in this repo is a dark palette, so light renders the same
+     values rather than a fabricated inversion -- pair with theme mode "dark".
+     ANSI is read with explicit `index` calls, NOT `range`: Go templates sort
+     map keys lexicographically, which would order these 0,1,10,11,...,2,3. */ -}}
+{{- $p := index .palettes .theme -}}
+{{- $a := $p.ansi -}}
+{{- $body := dict
+      "mPrimary"           $p.accent
+      "mOnPrimary"         $p.bg0
+      "mSecondary"         $p.fg2
+      "mOnSecondary"       $p.bg0
+      "mTertiary"          $p.blue
+      "mOnTertiary"        $p.bg0
+      "mError"             $p.red
+      "mOnError"           $p.bg0
+      "mSurface"           $p.bg1
+      "mOnSurface"         $p.fg1
+      "mSurfaceVariant"    $p.bg2
+      "mOnSurfaceVariant"  $p.fg2
+      "mOutline"           $p.bg3
+      "mShadow"            "#000000"
+      "mHover"             $p.accent
+      "mOnHover"           $p.bg0
+      "terminal" (dict
+        "normal" (dict
+          "black"   (index $a "0") "red"     (index $a "1")
+          "green"   (index $a "2") "yellow"  (index $a "3")
+          "blue"    (index $a "4") "magenta" (index $a "5")
+          "cyan"    (index $a "6") "white"   (index $a "7"))
+        "bright" (dict
+          "black"   (index $a "8")  "red"     (index $a "9")
+          "green"   (index $a "10") "yellow"  (index $a "11")
+          "blue"    (index $a "12") "magenta" (index $a "13")
+          "cyan"    (index $a "14") "white"   (index $a "15"))
+        "foreground"  $p.fg1
+        "background"  $p.bg0
+        "selectionFg" $p.bg0
+        "selectionBg" $p.fg1
+        "cursorText"  $p.bg0
+        "cursor"      $p.accent)
+-}}
+{{ dict "dark" $body "light" $body | toPrettyJson }}
