@@ -1,0 +1,46 @@
+# Keep the plain "Hyprland" session entry hidden from the greeter.
+#
+# hyprland ships TWO wayland-session entries and the greeter gives no hint which
+# is which:
+#
+#   Hyprland                  Exec=/usr/bin/start-hyprland
+#   Hyprland (uwsm-managed)   Exec=uwsm start -e -D Hyprland hyprland.desktop
+#
+# The plain one is a TRAP. greetd forks the compositor directly, so there is no
+# uwsm environment preload: graphical-session.target is never reached and the
+# session inherits the raw PAM environment (21 vars vs 30+). SSH_AUTH_SOCK,
+# XDG_CURRENT_DESKTOP, XDG_DATA_DIRS and friends are all absent. It LOOKS fine
+# and is quietly broken -- `work --start` cannot reach ssh-agent, and Deskflow
+# connects but passes no input. Cost hours on 2026-08-28.
+#
+# ⚠️ NoDisplay, NOT Hidden, and NOT NoExtract:
+#   NoExtract  -- the uwsm entry resolves hyprland.desktop BY ID. Remove the
+#                 file and the good entry breaks too. (Tried it. It broke.)
+#   Hidden     -- uwsm refuses hidden entries outright:
+#                 main.py:472  if entry.getHidden(): raise RuntimeError(...)
+#   NoDisplay  -- regreet honours it; uwsm never reads the key (grep -c
+#                 NoDisplay on uwsm's source returns 0). Only one that works.
+#
+# /usr/share is package-owned, so the edit is erased by every hyprland upgrade.
+# Hence this hook. Idempotent: the grep guard means re-running appends nothing.
+#
+# Diagnostic if a session ever feels "off": the PARENT PROCESS is the only tell,
+# because start-hyprland appears in ps on BOTH paths (it is what uwsm execs).
+#   pstree -ps $(pgrep -x Hyprland) | head -1
+#   systemd(N)---start-hyprland  -> uwsm, correct
+#   greetd(N)---start-hyprland   -> bare, broken
+#
+# NOT managed by chezmoi: it lives in /etc, outside $HOME. Versioned here and
+# installed by hand; see .system/README.md.
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = hyprland
+
+[Action]
+Description = Hiding the non-uwsm Hyprland session entry from greeters...
+Depends = bash
+When = PostTransaction
+Exec = /usr/bin/bash -c 'f=/usr/share/wayland-sessions/hyprland.desktop; grep -q "^NoDisplay=true" "$f" || printf "NoDisplay=true\n" >> "$f"'
