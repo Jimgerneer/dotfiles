@@ -160,4 +160,5 @@ plymouth-theme: generated '{{ .theme }}' -> $OUT
     sudo rm -rf /usr/share/plymouth/themes/tinos
     sudo cp -r $OUT /usr/share/plymouth/themes/tinos
     sudo plymouth-set-default-theme -R tinos
-EOF{{- end }}
+EOF
+{{ end }}

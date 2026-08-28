@@ -95,4 +95,5 @@ os.makedirs(OUT, exist_ok=True)
 io.open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8").write(
     json.dumps(manifest, indent=2) + "\n")
 print("browser-theme: %s  (palette %s)" % (OUT, THEME))
-PY{{- end }}
+PY
+{{ end }}
