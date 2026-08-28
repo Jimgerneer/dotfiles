@@ -1,0 +1,12 @@
+# Python bytecode. A .pyc for ts3-ptt-daemon was committed by accident once;
+# it is a build artifact of the deployed script, never source.
+__pycache__/
+*.pyc
+
+# Belt and braces. .chezmoiignore already keeps these out of the target state,
+# but this repo is PUBLIC -- a secret committed here is compromised the moment
+# it is pushed, not when it is noticed. See .githooks/pre-commit.
+*.pem
+*.key
+*.env
+.env.*
