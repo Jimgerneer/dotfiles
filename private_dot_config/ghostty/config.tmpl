@@ -65,3 +65,23 @@ shell-integration-features = cursor,no-sudo,title,ssh-env,ssh-terminfo,path
 {{- if lookPath "fish" }}
 command = {{ lookPath "fish" }}
 {{- end }}
+
+# Spurious PRIMARY-selection pastes: with mouse reporting on, scrolling inside
+# zellij intermittently injected the primary selection into the focused pane
+# (~1 in 4 wheel ticks, both directions). Measured 2026-08-28: no BTN_MIDDLE at
+# evdev, so the "click" is invented above the kernel; Hyprland misc:middle_click_paste
+# was already false, and no clipboard helper process was ever spawned -- so the
+# paste comes from Ghostty itself, which owns the Wayland selection natively.
+# Turning off mouse reporting stops the sequences that trigger it.
+# Cost: no click-to-focus / mouse resize of zellij panes. Wheel scrolling still
+# works, handled by Ghostty natively. Remove this line to restore.
+# mouse-reporting = false   <- TOTAL fix, but costs click-to-focus in zellij.
+#                              Flip back to this if copy-on-select is not enough.
+# Trying the narrower mitigation instead: keep mouse reporting, but stop Ghostty
+# filling PRIMARY from selections, so a spurious paste has nothing to insert.
+# PARTIAL by nature: PRIMARY is system-wide, so a selection made in Firefox (or
+# any other app) still lands there and can still be injected.
+# copy-on-select = false   <- tried 2026-08-28, did NOTHING. Ghostty was never
+#   the one copying: Claude Code implements its own mouse select-to-copy and
+#   shells out to `wl-copy` + `wl-copy --primary`. Fixed with
+#   CLAUDE_CODE_DISABLE_MOUSE instead, which is where the bug actually lives.

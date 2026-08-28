@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Claude Code: turn off its mouse handling.
+#
+# Symptom it fixes: with mouse reporting on, scrolling the wheel inside the
+# Claude Code pane intermittently (~1 in 4 ticks, both directions) injected the
+# PRIMARY selection into the prompt. Bad enough to make the prompt unusable.
+#
+# Root cause, measured 2026-08-28 -- it is Claude Code, not the terminal stack:
+#   * Claude Code implements its own mouse select-to-copy and shells out to
+#     `wl-copy` AND `wl-copy --primary`. Caught the pair spawning at the exact
+#     moment of a drag-select, carrying ZELLIJ=0 / TERM_PROGRAM=ghostty in their
+#     environment -- i.e. spawned from inside a zellij pane, not by Ghostty.
+#   * It only ever happened in the Claude pane. A plain fish pane in the SAME
+#     zellij session never reproduced it.
+#   * Zero BTN_MIDDLE at evdev across 150s of reproducing, so no real middle
+#     click is involved; the "click" is invented in software.
+#
+# Things that did NOT fix it, so nobody re-tries them:
+#   * Hyprland misc:middle_click_paste = false  -- no middle click exists
+#   * Ghostty copy-on-select = false            -- Ghostty was never copying
+#   * disabling the G502's kernel autorepeat    -- real bug, but unrelated
+# Ghostty mouse-reporting = false DID work, but only by starving Claude Code of
+# events, and it cost click-to-focus everywhere. This is the same fix at source.
+#
+# Narrower alternative if scroll-to-scrollback inside Claude Code is missed:
+# CLAUDE_CODE_DISABLE_MOUSE_CLICKS, which leaves the wheel alone.
+# ─────────────────────────────────────────────────────────────────────────────
+set -gx CLAUDE_CODE_DISABLE_MOUSE 1
