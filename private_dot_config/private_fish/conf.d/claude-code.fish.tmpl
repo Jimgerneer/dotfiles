@@ -1,3 +1,10 @@
+{{- /* tinos only. The bug is in Claude Code's mouse handling and was only ever
+     observed here; the Mac has not shown it, and disabling mouse support there
+     would cost click-to-focus for no benefit. Shared dotfiles repo, so this has
+     to be gated rather than simply present.
+     Renders empty elsewhere, and chezmoi removes a target whose content is
+     empty -- so on the Mac the file is not created at all. */ -}}
+{{ if eq .chezmoi.hostname "tinos" -}}
 # ─────────────────────────────────────────────────────────────────────────────
 # Claude Code: turn off its mouse handling.
 #
@@ -26,3 +33,4 @@
 # CLAUDE_CODE_DISABLE_MOUSE_CLICKS, which leaves the wheel alone.
 # ─────────────────────────────────────────────────────────────────────────────
 set -gx CLAUDE_CODE_DISABLE_MOUSE 1
+{{- end }}
