@@ -1,3 +1,10 @@
+{{/* Linux-only. Guarded in-script rather than via .chezmoiignore: chezmoi
+     skips a script that renders to zero bytes (verified), the guard cannot
+     drift away from the file it guards, and it survives renames -- a
+     .chezmoiignore entry matches the TARGET NAME, which silently stopped
+     matching when these moved into .chezmoiscripts/. Targets here are
+     Linux-only: /etc/vtrgb, /usr/share/plymouth, ~/.ts3client, gtk-3.0. */ -}}
+{{ if eq .chezmoi.os "linux" -}}
 #!/usr/bin/env bash
 # Re-tint the TeamSpeak 3 skin to the active chezmoi palette.
 #
@@ -154,4 +161,4 @@ if not os.path.exists(link) and os.path.isdir(os.path.join(STYLES, SRC)):
 
 print("teamspeak-theme: %s (%d colours mapped, %d left as-is)"
       % (", ".join(wrote), hits[0], hits[1]))
-PY
+PY{{- end }}

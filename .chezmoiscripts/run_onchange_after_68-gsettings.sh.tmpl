@@ -1,3 +1,10 @@
+{{/* Linux-only. Guarded in-script rather than via .chezmoiignore: chezmoi
+     skips a script that renders to zero bytes (verified), the guard cannot
+     drift away from the file it guards, and it survives renames -- a
+     .chezmoiignore entry matches the TARGET NAME, which silently stopped
+     matching when these moved into .chezmoiscripts/. Targets here are
+     Linux-only: /etc/vtrgb, /usr/share/plymouth, ~/.ts3client, gtk-3.0. */ -}}
+{{ if eq .chezmoi.os "linux" -}}
 #!/usr/bin/env bash
 #
 # Push the GTK interface settings into GSettings.
@@ -73,4 +80,4 @@ if [ "$changed" -eq 1 ]; then
     Changed. GTK4/libadwaita apps pick this up live through the settings portal.
     GTK3 apps (Thunar) already followed settings.ini and are unaffected.
 EOF
-fi
+fi{{- end }}

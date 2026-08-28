@@ -1,3 +1,10 @@
+{{/* Linux-only. Guarded in-script rather than via .chezmoiignore: chezmoi
+     skips a script that renders to zero bytes (verified), the guard cannot
+     drift away from the file it guards, and it survives renames -- a
+     .chezmoiignore entry matches the TARGET NAME, which silently stopped
+     matching when these moved into .chezmoiscripts/. Targets here are
+     Linux-only: /etc/vtrgb, /usr/share/plymouth, ~/.ts3client, gtk-3.0. */ -}}
+{{ if eq .chezmoi.os "linux" -}}
 #!/usr/bin/env bash
 # Recolour the Linux virtual consoles from the active palette.
 #
@@ -53,4 +60,4 @@ if cur != want:
     print("console-palette: /etc/vtrgb is out of date. To apply:")
     print("    sudo cp ~/.config/vtrgb/console-palette /etc/vtrgb")
     print("    sudo systemctl restart vtrgb.service   # if the unit is installed")
-PY
+PY{{- end }}
