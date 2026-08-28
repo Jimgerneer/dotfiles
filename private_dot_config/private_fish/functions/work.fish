@@ -17,6 +17,9 @@
 
 set -g __work_default_session Code
 set -g __work_state $HOME/.local/state/work-session
+# Separate file so `work-indicator` keeps reading a bare epoch stamp from
+# $__work_state and does not have to learn a format.
+set -g __work_termpid $HOME/.local/state/work-session.pid
 # ⚠️ Absolute path on purpose: ~/.local/bin is NOT in PATH on this machine
 # (verified 2026-08-27). Same reason clip-push-mac.service uses %h/.local/bin
 # and the Hyprland bind uses the interpolated home dir.
@@ -132,6 +135,13 @@ function __work_start -d "Bring up a work session"
 
     date +%s > $__work_state
 
+    # Remember which shell to close on --end. Guarded on WORK_TERM, which only
+    # the SUPER+M bind sets: starting a session from an ordinary terminal must
+    # not make `work --end` close that terminal out from under you.
+    if set -q WORK_TERM
+        echo $fish_pid > $__work_termpid
+    end
+
     # ── attach: ATTACH ONLY, never --create. See __work_attach for why. ──────
     echo "→ zellij: $session"
     __work_attach $session
@@ -158,8 +168,31 @@ function __work_end -d "Tear a work session down"
 
     rm -f $__work_state
 
-    # The zellij session is deliberately left running. Detaching happened when
-    # the ssh -t exited; the session and its panes survive on the Mac.
+    # ── detach, and close the terminal SUPER+M opened ────────────────────────
+    # Killing the ssh client IS the detach: the remote `zellij attach` gets a
+    # SIGHUP and exits, while the zellij SERVER -- a separate process -- keeps
+    # the session and its panes alive. Children first, then the shell, so ssh
+    # is not reparented and left running.
+    set -l termpid
+    test -f $__work_termpid; and set termpid (cat $__work_termpid 2>/dev/null)
+    rm -f $__work_termpid
+
+    if test -n "$termpid"; and string match -qr '^[0-9]+$' -- "$termpid"
+        if test "$termpid" = "$fish_pid"
+            # `work --end` was typed INSIDE the work terminal. Killing ourselves
+            # here would abort this function half-done, so fall through and let
+            # the `exit` at the very end close the window instead.
+            set -g __work_exit_after yes
+        else if kill -0 $termpid 2>/dev/null
+            pkill -TERM -P $termpid 2>/dev/null   # the ssh -> detaches zellij
+            sleep 0.3
+            kill -TERM $termpid 2>/dev/null       # the shell -> ghostty closes
+            echo "→ work terminal closed"
+        end
+    end
+
+    # The zellij session itself is deliberately left running. Only the CLIENT
+    # was killed; the session and its panes survive on the Mac.
     echo
     echo "work done"
 
@@ -171,6 +204,12 @@ function __work_end -d "Tear a work session down"
             notify-send -t 2500 -a work "No work session was open" \
                 "Stopped anything that was still running anyway."
         end
+    end
+
+    # Must be the very last thing: this closes the window we are printing into.
+    if set -q __work_exit_after
+        set -e __work_exit_after
+        exit
     end
 end
 

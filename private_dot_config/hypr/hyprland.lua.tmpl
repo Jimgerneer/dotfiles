@@ -159,7 +159,10 @@ hl.bind(mod .. " + W",         hl.dsp.window.close())
 -- Verified 2026-08-27 -- a deliberate `printf "\033]0;..."` could not budge it.
 -- `fish -C` runs the command and THEN drops to an interactive prompt, so
 -- detaching from zellij leaves a usable shell rather than closing the window.
-hl.bind(mod .. " + M",         hl.dsp.exec_cmd("sh -c 'ghostty --title=\"WORK ▸ Mac\" -e fish -C \"work --start\"'"))
+-- WORK_TERM=1 marks this shell as one `work --end` may close. Starting a
+-- session from an ordinary terminal leaves it unset, so --end never closes a
+-- window it did not open.
+hl.bind(mod .. " + M",         hl.dsp.exec_cmd("sh -c 'WORK_TERM=1 ghostty --title=\"WORK ▸ Mac\" -e fish -C \"work --start\"'"))
 -- Deliberately NOT a toggle on SUPER+M: opening a second work terminal by
 -- reflex would then silently tear the session down and drop mouse control
 -- mid-task.
