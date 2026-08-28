@@ -122,3 +122,9 @@
 Library
 .local/bin/mac-code-session
 {{ end }}
+
+# Python bytecode. chezmoi add on ~/.local/bin once swept up the __pycache__
+# for ts3-ptt-daemon; it is a build artifact of the deployed script, never
+# source, and it landed in a PUBLIC repo. git-level .gitignore is not enough:
+# chezmoi reads the source DIRECTORY, not git, so it must be ignored here too.
+.local/bin/__pycache__
