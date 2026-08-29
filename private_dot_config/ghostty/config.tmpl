@@ -10,6 +10,30 @@ selection-foreground = {{ $p.fg0 }}
 {{ range $i, $c := $p.ansi -}}
 palette = {{ $i }}={{ $c }}
 {{ end }}
+# ── Transparency ─────────────────────────────────────────────────────────────
+# Let a little wallpaper through. Done HERE rather than with Hyprland's
+# `decoration { active_opacity }` on purpose: that dims the whole window surface
+# for every app matched, and hyprland.conf deliberately pins both opacities to
+# 1.0 ("never dim -- this is a colour-work box"). Per-app alpha in ghostty
+# leaves Resolve and everything else untouched.
+#
+# background-opacity-cells is the line that makes this work inside zellij.
+# By default ghostty applies opacity only to the WINDOW background; any cell
+# with an explicit background colour stays fully opaque. Zellij repaints its
+# pane background from its theme (gruvbox-dark), so without this the terminal
+# would be transparent only around the edges and solid everywhere zellij draws
+# -- i.e. almost all of it. Zellij cannot fix this end: its theme spec has no
+# alpha channel (zellij-org/zellij#865, open since 2021).
+#
+# Trade-off: alpha now applies to ALL explicit backgrounds, so selection
+# highlights and nvim's colourcolumn also thin out slightly. Raise toward 1.0 if
+# that reads washed out; 1.0 disables transparency entirely.
+#
+# Blur stays off (ghostty's default) to match `blur { enabled = false }` in
+# hyprland.conf -- it costs GPU every frame during a render.
+background-opacity = 0.85
+background-opacity-cells = true
+
 # Font
 # font-family-bold = "PragmataPro Mono Liga Bold"
 # font-family-italic = "PragmataProp Mono Liga Italic"
