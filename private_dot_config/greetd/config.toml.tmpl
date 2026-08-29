@@ -34,7 +34,14 @@ vt = 1
 #   -s  allow VT switching -- keep this, it is the way to a TTY if the
 #       greeter itself misbehaves.
 #   -d  no client-side decorations, so there is no title bar on the greeter.
-command = "cage -s -d -- regreet"
+#   Wrapped in sh so stderr can be dropped: cage logs wlroots INFO (GPU
+#   enumeration, EGL/GLES2 extension dumps, DRM connector scan) straight to
+#   /dev/tty1, which flashes on screen at every logout. It is NOT the -d flag
+#   (-d is decorations, -D is debug) and a StandardError= drop-in on
+#   greetd.service does NOT catch it -- greetd gives the greeter its own VT,
+#   so the redirect has to be here. To get logs back: 2>>/tmp/greeter.log
+#   See phase-4-desktop.md "Greeter console spam".
+command = "sh -c 'exec cage -s -d -- regreet 2>/dev/null'"
 user = "greeter"
 
 [general]
