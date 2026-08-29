@@ -39,8 +39,30 @@ background-opacity-cells = true
 # font-family-italic = "PragmataProp Mono Liga Italic"
 # font-family-bold-italic = "PragmataProp Mono Liga Bold Italic"
 font-family = "PragmataPro Mono Liga"
-font-feature = "on"
 font-size = {{ .fontSize }}
+
+# ── Ligatures ────────────────────────────────────────────────────────────────
+# There was a `font-feature = "on"` here. It did nothing: the syntax is a
+# 4-char OpenType tag plus a state (`calt on`, `-liga`), and ghostty silently
+# ignores settings it cannot parse. Ligatures are ON by default anyway -- you
+# turn them OFF with `-calt` -- so the line was a no-op that read like a switch.
+#
+# The real reason ligatures looked broken at the fish prompt is below. Ghostty
+# shapes ligatures only across a "run" of cells, and by default it deliberately
+# BREAKS the run under the cursor so you can see individual characters while
+# editing. At a shell prompt the cursor is always sitting in the text you are
+# looking at, so `!=` and `->` stay unligated exactly where you type -- while
+# the same glyphs render ligated in ordinary output. no-cursor stops that break.
+#
+# Trade-off: editing inside a ligature is less precise now, because the cursor
+# no longer splits it back into separate glyphs. Drop this line to get that back.
+#
+# Runs also break at STYLE boundaries, and that part is NOT configurable: two
+# characters with different colours never ligate. Measured with a per-character
+# coloured test line -- `=>`, `!=`, `<=` split, and only the pairs that happened
+# to land on the same colour survived. That is why ligatures still will not
+# appear inside zellij, which restyles per cell.
+font-shaping-break = no-cursor
 
 # Mouse wheel. Ghostty's default is `precision:1,discrete:3` -- three lines per
 # wheel click. On its own that is fine, but inside zellij it compounds: ghostty
