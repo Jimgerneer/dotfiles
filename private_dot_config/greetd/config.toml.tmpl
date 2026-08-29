@@ -40,8 +40,10 @@ vt = 1
 #   (-d is decorations, -D is debug) and a StandardError= drop-in on
 #   greetd.service does NOT catch it -- greetd gives the greeter its own VT,
 #   so the redirect has to be here. To get logs back: 2>>/tmp/greeter.log
+#   Kept as a LOG rather than /dev/null: tmpfs, cleared each boot, costs
+#   nothing, and leaves the greeter diagnosable. Read /tmp/greeter.log.
 #   See phase-4-desktop.md "Greeter console spam".
-command = "sh -c 'exec cage -s -d -- regreet 2>/dev/null'"
+command = "sh -c 'exec cage -s -d -- regreet >/tmp/greeter.log 2>&1'"
 user = "greeter"
 
 [general]
