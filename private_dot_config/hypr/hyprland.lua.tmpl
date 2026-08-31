@@ -80,6 +80,26 @@ hl.config({
 
     dwindle = { preserve_split = true },
 
+    -- Centred-master, the "3 column" shape: master in the middle, slaves split
+    -- into a left and a right stack. Inert until something selects the master
+    -- layout -- general:layout stays dwindle, and these values only describe
+    -- what master looks like when a workspace rule switches to it (SUPER+T).
+    master = {
+        -- Centre column 2527 of 5120 after gaps, near the SUPER+G 2560 preset.
+        -- Measured 2026-08-31: 0.55 (the default) gives 2782, 0.5 gives 2527.
+        -- ⚠️ mfact only lands at CONFIG LOAD. Setting it via `hyprctl eval` on an
+        -- already-tiled workspace does not re-tile -- the value reads back as
+        -- changed while the geometry stays put. Reload to see it move.
+        mfact = 0.5,
+        -- Centre only once there are 2 slaves, i.e. exactly 3 windows. With one
+        -- or two, center_master_fallback gives an ordinary master/stack instead
+        -- of a lonely centred window with dead space beside it.
+        slave_count_for_center_master = 2,
+        center_master_fallback = "left",
+        -- New windows join a side stack, so the centre keeps whatever is in it.
+        new_status = "slave",
+    },
+
     misc = {
         disable_hyprland_logo   = true,
         disable_splash_rendering = true,
@@ -219,6 +239,20 @@ hl.bind("Print",              hl.dsp.exec_cmd("sh -c 'grim - | wl-copy'"))
 hl.bind(mod .. " + Print",    hl.dsp.exec_cmd("sh -c 'grim -g \"$(slurp)\" - | wl-copy'"))
 hl.bind(mod .. " + SHIFT + P", hl.dsp.exec_cmd("hyprpicker -a"))
 
+-- Annotate before saving. grim grabs the region, satty opens it for arrows,
+-- boxes and blur, then writes the PNG *and* puts it on the clipboard.
+-- --early-exit closes satty the moment it has saved, so it never lingers as a
+-- stray window on the workspace.
+--
+-- Needs `satty` (extra). The two plain grim binds above are unaffected if it is
+-- missing; only this one and the dir below depend on it.
+hl.bind(mod .. " + SHIFT + Print", hl.dsp.exec_cmd("sh -c 'grim -g \"$(slurp)\" - | satty --filename - --output-filename {{ .chezmoi.homeDir }}/Pictures/screenshots/$(date +%Y-%m-%d_%H-%M-%S).png --early-exit --copy-command wl-copy'"))
+
+-- Region straight to a dated file: no annotation step, no clipboard detour.
+-- Writes to ~/Pictures/screenshots, which must exist -- grim does not create it
+-- and fails silently to a keybind with no terminal to complain into.
+hl.bind(mod .. " + CTRL + Print",  hl.dsp.exec_cmd("sh -c 'grim -g \"$(slurp)\" {{ .chezmoi.homeDir }}/Pictures/screenshots/$(date +%Y-%m-%d_%H-%M-%S).png'"))
+
 -- Centred-window presets, for games that handle 32:9 badly. There is no title
 -- bar to fight: Hyprland draws no server-side decorations at all.
 -- 2560x1440 is a real mode the panel advertises, so a game set to it matches
@@ -252,6 +286,131 @@ hl.bind(mod .. " + G",         centred(2560, 1440))
 hl.bind(mod .. " + SHIFT + G", centred(3840, 1080))
 hl.bind(mod .. " + CTRL + G",  centred(1920, 1080))
 
+-- ⛑️❌ NO DESKFLOW PANIC KEY. Tried and MEASURED DEAD 2026-08-31 -- do not re-add.
+--
+-- Twice (2026-08-30, 2026-08-31) input vanished from BOTH machines mid-session
+-- and the only way out was the power button.
+--
+-- MECHANISM: deskflow does not grab devices. Crossing to the Mac makes Hyprland
+-- capture input through the InputCapture portal, and the ONLY way back is
+-- deskflow sending a Release carrying the matching activationId:
+--     activate, activationId 125, barrierId 4, x 3423, y 1445
+--     New Release request: activationId: 125, cursorPosition: 2037 1438
+-- If that Release never comes -- deskflow wedged, or the client socket dead --
+-- Hyprland holds the capture forever and every key and mouse motion goes into
+-- the libei stream instead of to the compositor. The machine is fine; both
+-- lockups ended in a clean systemd-poweroff, not a hang.
+--
+-- Hyprland HAS a force-release for exactly this: hl.dsp.release_input_capture().
+-- It was bound to SUPER+ESCAPE (as `bindl`, modmask 64, confirmed registered).
+--     ❌ It does not fire while capture is active. Tested from the Mac: nothing.
+-- An active capture swallows keybinds before Hyprland evaluates them, so NO
+-- keybind can be the escape hatch -- not this one, not any other combination.
+-- Recovery has to come from outside the input path entirely.
+--
+-- The real fix lives elsewhere: `heartbeat = 5000` in
+-- ~/.config/Deskflow/deskflow-server.conf, so the server detects a dead client
+-- instead of holding the capture against a half-open socket forever.
+
+-- Per-workspace 3-column toggle. Unlike the centred() presets above, this
+-- TILES: the middle window owns real space with gaps, nothing floats on top.
+--
+-- The per-workspace part rests on `layout` being a field of a workspace rule.
+-- That is Lua-only -- the .conf format never had it, so the wiki's workspace
+-- rule list does not mention it. It is in the stub:
+--     /usr/share/hypr/stubs/hl.meta.lua  (HL.WorkspaceRuleSpec)
+-- Measured on 0.56.2, 2026-08-31: issuing this rule against a workspace holding
+-- three tiled windows re-tiled it to 1134 | 2782 | 1134 immediately, with no
+-- `hyprctl reload`.
+--
+-- The full cycle is measured on 0.56.2, 2026-08-31, on a workspace holding three
+-- tiled windows -- widths left | centre | right, no `hyprctl reload` at any step:
+--     dwindle      1262 | 1254 | 2534
+--     toggled on   1262 | 2527 | 1261     <- centred master
+--     toggled off  1262 | 1254 | 2534     <- back to dwindle, exactly as before
+-- So set_enabled(false) genuinely reverts; the rule does not have to be torn
+-- down and there is nothing to clean up on reload.
+--
+-- Rules are cached per workspace id because hl.workspace_rule ADDS a rule; a
+-- second call for the same workspace would stack another one rather than
+-- replace it, and there would be no handle to switch the first back off.
+-- Centring the focused window needs a DEFERRED call, and the obvious routes are
+-- all dead ends -- measured on 0.56.2, 2026-08-31, so nobody retries them:
+--
+--   hl.timer(fn, { timeout = 500 })   returns nil and NEVER FIRES. Not from the
+--                                     repl, not from this config at load.
+--   swapwithmaster in the same tick   no-op. Enabling the rule switches the
+--                                     layout ASYNCHRONOUSLY; dispatched inline
+--                                     it still runs against dwindle, which has
+--                                     no master to swap with.
+--   doing nothing                     master does NOT adopt the focused window.
+--                                     Focused the leftmost window, toggled on,
+--                                     and a different window took the centre.
+--
+-- So the swap is shelled out with a delay. The re-tile settles in under 50ms
+-- (sampled every 50ms: the first sample was already 1261,1262,2527 against
+-- dwindle's 1255,1261,2534), so 150ms is comfortably clear of it.
+--
+-- ⚠️ The address is captured NOW and passed through, rather than letting the
+-- deferred call re-read the focused window. follow_mouse = 1 means the re-tile
+-- can slide a different window under a stationary cursor and steal focus --
+-- observed repeatedly while testing this -- which would centre the wrong one.
+--
+-- No quoting gymnastics: window.address is "0x5561b201f2f0", which Lua parses
+-- as a hex integer literal, so the generated call needs no inner quotes at all
+-- and tonumber(w.address) compares against it directly.
+
+-- Global ON PURPOSE: the deferred `hyprctl eval` below reaches this by name
+-- from outside the config's scope, so a local would be invisible to it.
+function CentreWindow(addr)
+    local ws = hl.get_active_workspace()
+    if not ws then return end
+    local target, widest, best = nil, nil, -1
+    for _, w in ipairs(hl.get_workspace_windows(ws)) do
+        if not w.floating then
+            if tonumber(w.address) == addr then target = w end
+            -- In centred master the master column IS the widest tiled window
+            -- (mfact 0.5: 2527 centre against ~1262 sides). HL.Window has no
+            -- is_master field, so width is the only handle on it.
+            if w.size.x > best then best, widest = w.size.x, w end
+        end
+    end
+    if not target or not widest then return end
+    -- ⚠️ Bail if it is ALREADY centred. swapwithmaster on the master window
+    -- does not no-op -- it EVICTS it to a side stack. Measured: focused master
+    -- at x=1297 w=2527 went to x=17 w=1262 and a slave took the centre.
+    if widest.address == target.address then return end
+    hl.dispatch(hl.dsp.focus({ window = target }))
+    hl.dispatch(hl.dsp.layout("swapwithmaster"))
+    hl.dispatch(hl.dsp.focus({ window = target }))
+end
+
+-- Also global so the behaviour can be driven and tested without synthesising a
+-- keypress: `hyprctl eval 'ToggleThreeColumn()'`.
+local three_col = {}
+function ToggleThreeColumn()
+    local ws = hl.get_active_workspace()
+    if not ws then return end
+    local id = tostring(ws.id)
+    if three_col[id] then
+        three_col[id]:set_enabled(not three_col[id]:is_enabled())
+    else
+        three_col[id] = hl.workspace_rule({
+            workspace   = id,
+            layout      = "master",
+            layout_opts = { orientation = "center" },
+        })
+    end
+    -- Only on the way ON. Toggling off just returns the workspace to dwindle,
+    -- where there is no centre to move anything into.
+    if not three_col[id]:is_enabled() then return end
+    local win = hl.get_active_window()
+    if not win or win.floating then return end
+    hl.dispatch(hl.dsp.exec_cmd(
+        [[sh -c "sleep 0.15; hyprctl eval ']] .. "CentreWindow(" .. win.address .. ")" .. [['"]]))
+end
+hl.bind(mod .. " + T", ToggleThreeColumn)
+
 --------------------------------
 ---- WINDOW RULES --------------
 --------------------------------
@@ -284,3 +443,22 @@ hl.window_rule({ name = "util-float",
     match = { class = "^(pavucontrol|wiremix|nm-connection-editor|blueman-manager)$" }, float = true })
 hl.window_rule({ name = "filedlg-float",
     match = { title = "^(Open File|Save File|Save As|Open Folder)$" }, float = true })
+
+-- TeamSpeak 3: 0.85 to match ghostty's background-opacity.
+--
+-- NOT the same mechanism, despite the matching number. Ghostty applies alpha
+-- itself, to its own background only, so glyphs stay fully opaque. TS3 is a Qt5
+-- XWayland client with no such setting, so the only lever is the compositor,
+-- and that alphas the ENTIRE surface -- text, icons and avatars included. This
+-- is exactly the whole-window dimming that decoration:active_opacity was left
+-- at 1.0 to avoid; it is scoped to this one class deliberately.
+--
+-- Both values given so the window does not change opacity on focus.
+-- 0.56 Lua: `opacity` is ONE STRING holding the conf-style value. A table
+-- {0.85, 0.85} is rejected ("string type requires a string") and there is no
+-- opacity_inactive field -- verified with --verify-config on this build.
+--
+-- blur { enabled = false } stands, so what shows through is the raw wallpaper
+-- or window behind, not a frosted blur.
+hl.window_rule({ name = "ts3-opacity", match = { class = "^(TeamSpeak 3)$" },
+    opacity = "0.85 0.85" })
