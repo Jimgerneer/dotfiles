@@ -31,7 +31,30 @@ from evdev import ecodes
 
 DEVICE_NAME = "Logitech G502 X PLUS"   # matched by name, not a path: the event
                                        # number moves between boots
-BUTTON = ecodes.BTN_EXTRA              # 276 -- the thumb button
+# ⚠️ A SET, not one code -- the G502 does not always report the same button.
+# Measured 2026-08-31: PTT arrived as BTN_FORWARD (277) while this daemon had
+# assumed BTN_EXTRA (276) since it was written on 2026-08-27, so every press was
+# silently discarded at the `not in BUTTONS` check below. PTT had worked before
+# that, which points at the code MOVING rather than at 276 having always been
+# wrong: this mouse enumerates as two nodes ("Logitech Candy" and "Logitech
+# G502 X PLUS") and which name -- and which button map -- you get depends on
+# whether hid-logitech-hidpp has bound before the input node is created. That
+# is a boot-order race, so pinning either single code would keep breaking.
+#
+# Accepting both thumb codes costs nothing: neither is bound to anything else
+# here. Override with TS3_PTT_BUTTONS=276,277 in the unit if that changes.
+def _buttons():
+    raw = os.environ.get("TS3_PTT_BUTTONS")
+    if not raw:
+        return frozenset((ecodes.BTN_EXTRA, ecodes.BTN_FORWARD))   # 276, 277
+    return frozenset(int(x) for x in raw.replace(",", " ").split())
+
+
+BUTTONS = _buttons()
+# Thumb-button codes worth reporting when they arrive but are NOT in BUTTONS.
+# This is the whole diagnostic: if PTT dies again, the journal names the code
+# that turned up instead of leaving you to guess.
+CANDIDATES = range(275, 280)
 CQ_HOST, CQ_PORT = "127.0.0.1", 25639
 INI = Path.home() / ".ts3client" / "clientquery.ini"
 RETRY = 3.0
@@ -78,7 +101,7 @@ def find_device():
             d = evdev.InputDevice(path)
         except OSError:
             continue
-        if d.name == DEVICE_NAME and BUTTON in d.capabilities().get(ecodes.EV_KEY, []):
+        if d.name == DEVICE_NAME and BUTTONS & set(d.capabilities().get(ecodes.EV_KEY, [])):
             return d
         d.close()
     return None
@@ -179,6 +202,8 @@ def session():
     log(f"ClientQuery authenticated, subscribed "
         f"(release {RELEASE_DELAY:.2f}s, backstop {IDLE_REASSERT:.0f}s)")
 
+    fired = set()               # PTT codes seen this session, logged once each
+    ignored = set()             # other thumb codes seen, logged once each
     desired = False             # what the button says the mic should be
     live = None                 # what we last sent, to suppress needless traffic
     mute_at = None              # deadline for a pending mute after release
@@ -236,8 +261,24 @@ def session():
                     continue
 
                 for ev in key.fileobj.read():
-                    if ev.type != ecodes.EV_KEY or ev.code != BUTTON:
+                    if ev.type != ecodes.EV_KEY:
                         continue
+                    if ev.code not in BUTTONS:
+                        # Name any OTHER thumb button that shows up, once each.
+                        # Silence here is what made the 2026-08-31 breakage take
+                        # a capture to find: the daemon looked perfectly healthy
+                        # while dropping every press on the floor.
+                        if (ev.value == 1 and ev.code in CANDIDATES
+                                and ev.code not in ignored):
+                            ignored.add(ev.code)
+                            log(f"ignoring button {ev.code} "
+                                f"({ecodes.bytype[ecodes.EV_KEY].get(ev.code)}) "
+                                f"-- not in PTT set {sorted(BUTTONS)}")
+                        continue
+                    if ev.value == 1 and ev.code not in fired:
+                        fired.add(ev.code)
+                        log(f"PTT is button {ev.code} "
+                            f"({ecodes.bytype[ecodes.EV_KEY].get(ev.code)})")
                     # value 2 is KERNEL AUTOREPEAT. Drop it explicitly.
                     #
                     # This mouse exposes macro keys, so it registers as a
