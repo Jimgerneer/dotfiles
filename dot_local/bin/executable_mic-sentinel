@@ -166,7 +166,60 @@ def check(trigger, extra=None):
     return rec
 
 
+def report():
+    """`mic-sentinel --report` -- the whole point of collecting this.
+
+    Deliberately built in here rather than left as a jq incantation in the
+    docs: jq is NOT installed on this machine, and the shell is fish, where a
+    python -c one-liner full of nested quotes is a trap (see README.md).
+    One word, no quoting, works from any shell.
+    """
+    try:
+        rows = [json.loads(l) for l in LOG.open(encoding="utf-8") if l.strip()]
+    except OSError as e:
+        print(f"no log yet ({e})")
+        return 1
+    if not rows:
+        print("log is empty")
+        return 1
+
+    counts = {}
+    for r in rows:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+    print(f"{len(rows)} checks, {rows[0]['time']} -> {rows[-1]['time']}")
+    print("  " + "  ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+
+    bad = [i for i, r in enumerate(rows) if r["status"] != "ok"]
+    print()
+    if not bad:
+        print("No failures recorded. If the mic is dead RIGHT NOW and nothing")
+        print("is listed here, the sentinel was not running -- check:")
+        print("  systemctl --user status mic-sentinel.service")
+        print()
+    else:
+        print(f"FAILURES ({len(bad)}) -- with the check immediately before each,")
+        print("which is what says whether a resume preceded it:")
+        for i in bad:
+            prev = rows[i - 1] if i else None
+            if prev:
+                print(f"  before: {prev['time']}  {prev['trigger']:<9} {prev['status']}")
+            r = rows[i]
+            slept = f"  slept={r['slept_seconds']}s" if r.get("slept_seconds") else ""
+            print(f"  FAIL  : {r['time']}  {r['trigger']:<9} {r['status']}"
+                  f"  peak={r.get('peak')}{slept}")
+            print()
+
+    print("last 10 checks:")
+    for r in rows[-10:]:
+        slept = f"  slept={r['slept_seconds']}s" if r.get("slept_seconds") else ""
+        print(f"  {r['time']}  {r['trigger']:<9} {r['status']:<7} "
+              f"peak={r.get('peak')}{slept}")
+    return 0
+
+
 def main():
+    if "--report" in sys.argv[1:]:
+        return report()
     log("mic-sentinel starting")
     check("startup")
 
