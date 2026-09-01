@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""Watch the RODE AI-1 for the silent-ADC failure, and record evidence.
+
+THE FAILURE (measured 2026-08-31): the AI-1 stays enumerated and keeps
+streaming isochronously at exactly 48 kHz -- hw_ptr advances normally, ALSA
+reports RUNNING, the PipeWire graph is intact -- while every sample it delivers
+is zero. Nothing anywhere logs an error. It is invisible until you are on a call
+and nobody can hear you.
+
+A logical USB reset does NOT clear it (`authorized` 0 -> 1 was measured to do
+nothing). Only physically unplugging the USB cable does, because neither xHCI
+controller on this board supports port power switching (both report PPC=0), so
+no software can remove VBUS. See RESUME-HERE.md.
+
+THIS DAEMON DOES NOT FIX ANYTHING. It answers "when did it break, and what had
+just happened?" -- the two things the logs could not tell us the first time.
+
+Checks fire on:
+  startup   -- covers boot, reboot and re-login
+  resume    -- logind PrepareForSleep(false), the prime suspect
+  periodic  -- every 30 min, so a failure can be DATED even if no suspend
+               happened. This is the control: a silence with no preceding
+               resume would falsify the suspend theory outright.
+
+Silence is only notified on TRANSITION, so a broken mic does not nag every
+30 minutes.
+"""
+import array
+import json
+import math
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import gi
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+
+DEVICE_MATCH = "RODE_AI-1"          # substring of the PulseAudio source name
+SAMPLE_SECONDS = 2.0
+RATE = 48000
+PERIODIC_SECONDS = 30 * 60
+
+STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "mic-sentinel"
+LOG = STATE_DIR / "log.jsonl"
+LAST = STATE_DIR / "last-status"
+
+
+def log(msg):
+    print(f"{time.strftime('%H:%M:%S')} {msg}", flush=True)
+
+
+def find_source():
+    """Resolve the raw AI-1 source by name. The name is serial-derived, so it
+    survives re-enumeration -- do not cache it across checks anyway, since the
+    node id definitely does not."""
+    try:
+        out = subprocess.run(["pactl", "list", "short", "sources"],
+                             capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) > 1 and DEVICE_MATCH in parts[1] and "monitor" not in parts[1]:
+            return parts[1]
+    return None
+
+
+def measure(src):
+    """Read a fixed number of raw frames, then stop. Deliberately --raw: it
+    avoids a WAV header, a temp file, and the timeout dance needed to make
+    parecord finalise a container."""
+    want = int(RATE * SAMPLE_SECONDS) * 2          # s16 mono = 2 bytes/frame
+    cmd = ["parecord", "-d", src, f"--rate={RATE}", "--channels=1",
+           "--format=s16le", "--raw"]
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    except OSError as e:
+        return None, f"parecord failed: {e}"
+    try:
+        data = b""
+        deadline = time.monotonic() + SAMPLE_SECONDS + 8
+        while len(data) < want and time.monotonic() < deadline:
+            chunk = p.stdout.read(want - len(data))
+            if not chunk:
+                break
+            data += chunk
+    finally:
+        p.terminate()
+        try:
+            p.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            p.kill()
+    if len(data) < 2:
+        return None, "no data captured"
+    a = array.array("h")
+    a.frombytes(data[: len(data) // 2 * 2])
+    peak = max(max(a), -min(a)) if a else 0
+    rms = math.sqrt(sum(x * x for x in a) / len(a)) if a else 0.0
+    return {"frames": len(a), "peak": peak, "rms": round(rms, 1),
+            "nonzero": sum(1 for x in a if x),
+            "dbfs": round(20 * math.log10(peak / 32768), 1) if peak else None}, None
+
+
+def read_last():
+    try:
+        return LAST.read_text(encoding="utf-8").strip()
+    except OSError:
+        return "unknown"
+
+
+def check(trigger, extra=None):
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    src = find_source()
+    rec = {"time": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "trigger": trigger,
+           "source": src}
+    if extra:
+        rec.update(extra)
+
+    if src is None:
+        rec["status"] = "absent"
+        rec["error"] = "no RODE source present"
+    else:
+        m, err = measure(src)
+        if m is None:
+            rec["status"] = "error"
+            rec["error"] = err
+        else:
+            rec.update(m)
+            # Exact zero across ~96k samples is the signature. A live preamp
+            # always shows a noise floor -- the known-good reading after the
+            # 2026-08-31 power cycle was peak=259 (-42 dBFS) in a quiet room.
+            rec["status"] = "silent" if m["peak"] == 0 else "ok"
+
+    try:
+        with LOG.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec) + "\n")
+    except OSError as e:
+        log(f"could not write {LOG}: {e}")
+
+    previous = read_last()
+    try:
+        LAST.write_text(rec["status"], encoding="utf-8")
+    except OSError:
+        pass
+
+    detail = (f"peak={rec.get('peak')} nonzero={rec.get('nonzero')}"
+              if "peak" in rec else rec.get("error", ""))
+    log(f"[{trigger}] {rec['status']} {detail}")
+
+    # Notify only when it CHANGES, so a dead mic does not nag every 30 min.
+    if rec["status"] in ("silent", "absent") and previous not in ("silent", "absent"):
+        subprocess.run(
+            ["notify-send", "-u", "critical", "-a", "mic-sentinel",
+             "Microphone is dead",
+             "The RODE AI-1 is enumerated but delivering digital silence.\n"
+             "Unplug and replug its USB cable -- a software reset will not fix it.\n"
+             "Close TeamSpeak first, or it will hang."],
+            check=False)
+    elif rec["status"] == "ok" and previous in ("silent", "absent"):
+        subprocess.run(["notify-send", "-a", "mic-sentinel",
+                        "Microphone is back", "The AI-1 is delivering audio again."],
+                       check=False)
+    return rec
+
+
+def main():
+    log("mic-sentinel starting")
+    check("startup")
+
+    suspended_at = {"t": None}
+
+    def on_signal(_conn, _sender, _path, _iface, _signal, params):
+        going_to_sleep = bool(params[0])
+        if going_to_sleep:
+            suspended_at["t"] = time.time()
+            log("suspending")
+            return
+        slept = None
+        if suspended_at["t"] is not None:
+            slept = round(time.time() - suspended_at["t"])
+        # The device needs a moment to re-settle before it is worth measuring.
+        GLib.timeout_add_seconds(
+            8, lambda: (check("resume", {"slept_seconds": slept}), False)[1])
+
+    bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+    bus.signal_subscribe("org.freedesktop.login1",
+                         "org.freedesktop.login1.Manager",
+                         "PrepareForSleep", "/org/freedesktop/login1",
+                         None, Gio.DBusSignalFlags.NONE, on_signal)
+
+    GLib.timeout_add_seconds(PERIODIC_SECONDS,
+                             lambda: (check("periodic"), True)[1])
+    GLib.MainLoop().run()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

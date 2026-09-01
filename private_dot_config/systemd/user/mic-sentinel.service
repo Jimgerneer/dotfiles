@@ -1,0 +1,26 @@
+[Unit]
+Description=Watch the RODE AI-1 for the silent-ADC failure and record evidence
+Documentation=file://%h/Documents/arch-rebuild/RESUME-HERE.md
+# Not tied to graphical-session: it needs PipeWire and the system bus, not a
+# compositor. It resolves the source by name on every check and tolerates the
+# device being absent, so starting before PipeWire is ready is harmless.
+After=pipewire.service
+Wants=pipewire.service
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/mic-sentinel
+# It only ever READS the mic and appends to its own log. Restart=always so a
+# crash cannot silently end the data collection -- the whole point is that the
+# next occurrence is captured without anyone remembering to turn it on.
+Restart=always
+RestartSec=10
+# Sampling opens a capture stream; nothing else is touched.
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/mic-sentinel
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
