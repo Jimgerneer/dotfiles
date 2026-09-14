@@ -163,6 +163,43 @@ hl.bind(mod .. " + V",      hl.dsp.exec_cmd(terminal .. " --class=wiremix -e wir
 -- running both as daemons feeds back on itself (copy here -> push -> Mac
 -- pasteboard changes -> pull -> push...). See phase-6-remote-mac.md.
 hl.bind(mod .. " + SHIFT + V", hl.dsp.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/clip-pull-mac"))
+
+-- Focus-or-launch. Jump to the window if it is already open, start it if not --
+-- the ergonomic of a global hotkey, which is the one real thing Brave app mode
+-- gives up against a proper desktop client.
+--
+-- ⚠️ The class argument is a LUA PATTERN, not a regex -- `-` and `.` need `%`
+-- escaping, NOT backslashes. The window_rule matches further down use regex and
+-- look almost identical; they are not interchangeable.
+--
+-- Deliberately filtering in Lua rather than passing `{ class = ... }` to
+-- hl.get_windows: the stub types that filter as a plain string and does not say
+-- whether it matches literally or as a regex. Iterating is unambiguous, and the
+-- window count here is tiny.
+--
+-- Focus targets the ADDRESS, not the class. `hl.dsp.focus({ window = "class:..." })`
+-- does work (measured 2026-09-13), but an address cannot match the wrong window
+-- if a second one ever shares the class.
+local function focus_or_launch(class_pat, cmd)
+    return function()
+        for _, w in ipairs(hl.get_windows()) do
+            if w.class and w.class:match(class_pat) then
+                hl.dispatch(hl.dsp.focus({ window = "address:" .. w.address }))
+                return
+            end
+        end
+        hl.dispatch(hl.dsp.exec_cmd(cmd))
+    end
+end
+
+-- Todoist. See the window_rule further down for why the class is this shape:
+-- Chromium app mode generates it from the URL and ignores --class entirely.
+-- ⚠️ N was free in every modifier combination (checked SUPER, SHIFT and CTRL
+-- forms -- the SUPER+SHIFT+M/mute collision was found the hard way once).
+hl.bind(mod .. " + N", focus_or_launch(
+    "^brave%-app%.todoist%.com__",
+    "brave --app=https://app.todoist.com --user-data-dir={{ .chezmoi.homeDir }}/.local/share/brave-todoist"))
+
 hl.bind(mod .. " + ALT + Q", hl.dsp.exit())
 hl.bind(mod .. " + SHIFT + C",
         hl.dsp.exec_cmd("noctalia msg panel-toggle clipboard"))
