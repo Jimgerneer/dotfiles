@@ -24,10 +24,37 @@
 # 🔜 Not covered here: `hey`, which installs to ~/.local/bin outside pacman and
 # updates only via `hey upgrade`. yay covers everything else including
 # claude-code, which is an AUR package (so `pacman -Syu` alone would skip it).
+# ⚠️ --sudoloop IS PASSED EXPLICITLY even though ~/.config/yay/config.json now
+# sets "sudoloop": true. Belt and braces on purpose: this function's whole job is
+# surviving an unattended update, and a config file that can be reset, reinstalled
+# or lost in a rebuild should not be the only thing keeping that true.
+#
+# WHAT IT FIXES (2026-09-14, a real failure):
+# qt5-webengine built for ~12 minutes, then the install step died with
+#     [sudo] password for decoy:
+#     sudo: timed out reading password
+# and the whole transaction was lost -- 9 built packages, ~1.6 GB, not installed.
+# TWO sudo settings combined to do that:
+#   timestamp_timeout (15 min default) -- the cached auth expired mid-build, so
+#                                         sudo prompted again at install time
+#   passwd_timeout    (5 min default)  -- nobody was there, so sudo gave up
+# --sudoloop refreshes the timestamp in the background, so the prompt never
+# reappears. It needs no sudoers edit and widens no privileges: it only keeps
+# an already-authenticated session from expiring while you are actively updating.
+#
+# Also set in the yay config, and worth knowing here: "batchinstall": true, which
+# installs all built AUR packages in ONE pacman transaction instead of one per
+# package -- nine chances to hit this failure became one.
+#
+# NOT set, deliberately: answerdiff. The PKGBUILD diff menu stays on. The AUR is
+# user-submitted and most of these packages (brave-bin, 1password, google-chrome,
+# slack-desktop, spotify) are thin wrappers that fetch a vendor URL -- the diff is
+# the only place a changed URL would be visible. The menus fire BEFORE any build,
+# so answering them costs nothing against the walk-away problem this solves.
 function system-update -d "yay -Syu, with suspend blocked for the duration"
     echo "→ holding a block-mode sleep inhibitor for the duration"
     systemd-inhibit --what=sleep --mode=block --why="system-update: yay -Syu" \
-        yay -Syu $argv
+        yay -Syu --sudoloop $argv
     set -l rc $status
     echo "→ inhibitor released (suspend re-enabled)"
     return $rc
