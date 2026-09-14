@@ -273,12 +273,43 @@ hl.bind(mod .. " + CTRL + Print",  hl.dsp.exec_cmd("sh -c 'grim -g \"$(slurp)\" 
 -- dispatchers get chained. Arg shapes probed against the running compositor;
 -- the stub types these as fun(...) and documents nothing:
 --     float  { action = "on" | "off" | "toggle" }
---     resize { x = <w>, y = <h>, exact = true }   -- without exact it is a DELTA
+--     resize { x = <w>, y = <h>, relative? = bool, window? = <sel> }
 --     center {}
+--     fullscreen { action = "toggle"|"set"|"unset", mode = "fullscreen"|"maximized" }
+--
+-- These shapes are no longer guesswork. Hyprland's own validator strings carry
+-- the contract, and 0.56.2 will print it on request:
+--     strings /usr/bin/Hyprland | grep -E '^hl\.window\.'
+-- Every dispatcher also takes `window = "address:0x..."`, which is how the
+-- behaviour below was tested without stealing focus from a running game --
+-- and passing a deliberately bogus address validates ARGUMENTS ONLY, because
+-- "no target" comes after the arg check:
+--     hyprctl dispatch 'hl.dsp.window.fullscreen({ action = "unset",
+--         mode = "fullscreen", window = "address:0xdeadbeef" })'
+--
+-- 🔴 `exact = true` WAS A NO-OP AND THE COMMENT HERE WAS WRONG.
+-- There is no `exact` key anywhere in Hyprland; the real one is `relative`.
+-- Unknown keys are silently ignored by resize -- `banana = true` also returns
+-- `ok` -- so nothing complained. resize is ABSOLUTE by default, which is why
+-- this worked anyway. Measured 2026-09-08; dropped rather than left as a trap.
+--
+-- 🔴 THE FULLSCREEN LINE IS THE POINT OF THIS FUNCTION.
+-- A window in true fullscreen ignores resize and center outright: its geometry
+-- is owned by the fullscreen state. Without the unset, all three G binds do
+-- NOTHING on a game that took real fullscreen -- which is the second time
+-- these binds have failed silently, the first being the hyprctl-syntax trap
+-- above. Measured 2026-09-08 on a hidden window, same three dispatchers:
+--     fullscreen -> 5120x1440 @ 0,0   resize+center changed NOTHING
+--     unset      -> 2561x1440 @ 1280,0   i.e. exactly the intended centring
+-- Games that run borderless/windowed (Abiotic Factor) were never fullscreen,
+-- so they always worked -- which is what made this look game-specific.
+-- `unset` is safe on a window that is not fullscreen: it is a set-to-off, not
+-- a toggle, so it cannot fullscreen something by accident.
 local function centred(w, h)
     return function()
+        hl.dispatch(hl.dsp.window.fullscreen({ action = "unset", mode = "fullscreen" }))
         hl.dispatch(hl.dsp.window.float({ action = "on" }))
-        hl.dispatch(hl.dsp.window.resize({ x = w, y = h, exact = true }))
+        hl.dispatch(hl.dsp.window.resize({ x = w, y = h }))
         hl.dispatch(hl.dsp.window.center({}))
     end
 end
@@ -437,6 +468,43 @@ hl.window_rule({ name = "steam-friends",  match = { title = "^(Friends List)$" }
 hl.window_rule({ name = "steam-settings", match = { title = "^(Steam Settings)$" }, float = true })
 
 -- Picture-in-picture and dialogs
+-- ── workspace routing ───────────────────────────────────────────────────
+-- Workspace 3 is `notes` in the phase-4 layout. That table was written in
+-- August and never implemented; these two rules are it.
+--
+-- Todoist DO ship official Linux builds (Snap and AppImage) -- but both sit
+-- outside pacman and need hand-updating. That is exactly how the old
+-- `todoist` AUR CLI rotted from 2023 until Todoist killed the API under it in
+-- Feb 2026, with nothing to announce it. So: Brave in app mode instead.
+-- Nothing new to maintain, native Wayland already, updates with the browser.
+--
+-- The packaged `todoist-wrapper` is NOT usable: its SecurityService injects a
+-- CSP allowing only 'self' and https://*.todoist.com, while Todoist serves its
+-- JS/CSS from todoist.b-cdn.net -- so every asset is blocked and the app shows
+-- "couldn't load the files". Upstream issue #157, open since 2026-03-31.
+--
+-- ⚠️ `--class=todoist-app` IS IGNORED. Chromium app mode generates its own
+-- WM class from the URL and profile, so the window reports
+--     brave-app.todoist.com__-Default
+-- not the class you asked for. Measured 2026-09-13. The `__.*` tail keeps the
+-- rule working if the profile inside --user-data-dir is ever renamed.
+--
+-- ⚠️ Obsidian is matched TWO ways on purpose. Its .desktop advertises
+-- StartupWMClass `md.obsidian.Obsidian`, but Electron apps commonly report a
+-- plain lowercase app_id under Wayland. Matching only the .desktop value
+-- risks a rule that never fires and looks like Hyprland ignoring it.
+-- Collapse this to whichever one is real after checking `hyprctl clients`
+-- with Obsidian open.
+--
+-- Deliberately NOT `silent`: these are launched to be looked at, so following
+-- the window to workspace 3 is the wanted behaviour.
+hl.window_rule({ name = "todoist-notes-ws",
+                 match = { class = "^(brave-app\\.todoist\\.com__.*)$" },
+                 workspace = "3" })
+hl.window_rule({ name = "obsidian-notes-ws",
+                 match = { class = "^(md\\.obsidian\\.Obsidian|obsidian)$" },
+                 workspace = "3" })
+
 hl.window_rule({ name = "pip-float", match = { title = "^(Picture-in-Picture)$" }, float = true })
 hl.window_rule({ name = "pip-pin",   match = { title = "^(Picture-in-Picture)$" }, pin = true })
 hl.window_rule({ name = "util-float",

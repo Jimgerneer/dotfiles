@@ -1,0 +1,31 @@
+[Desktop Entry]
+# Todoist, as a Brave app-mode window.
+#
+# WHY NOT A REAL DESKTOP APP
+# Todoist ship official Snap and AppImage builds, but both live outside pacman
+# and need hand-updating -- the same shape of neglect that let the old `todoist`
+# AUR CLI rot from 2023 until the API was switched off under it in Feb 2026.
+# The community `todoist-wrapper` is unusable as packaged: it injects a CSP that
+# blocks Todoist's own CDN (todoist.b-cdn.net), so nothing loads. Upstream #157,
+# open since 2026-03-31.
+#
+# Brave is already here, already native Wayland, and already updates with the
+# system. App mode gives a chromeless window with no tabs or address bar.
+#
+# ⚠️ --class is IGNORED in Chromium app mode; the WM class is generated from the
+# URL and profile. StartupWMClass below is the real one, measured 2026-09-13.
+# The Hyprland rule that routes this to workspace 3 matches the same string.
+#
+# Separate --user-data-dir on purpose: its own cookie jar and session, so this
+# is a Todoist app rather than a browser window that happens to be logged in.
+Type=Application
+Name=Todoist
+GenericName=Task Manager
+Comment=Todoist in a dedicated Brave app window
+Exec=brave --app=https://app.todoist.com --user-data-dir=/home/decoy/.local/share/brave-todoist
+Icon=todoist
+Terminal=false
+Categories=Office;ProjectManagement;
+Keywords=todo;tasks;todoist;gtd;
+StartupWMClass=brave-app.todoist.com__-Default
+StartupNotify=true
