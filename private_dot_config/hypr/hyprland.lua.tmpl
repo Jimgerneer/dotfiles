@@ -117,6 +117,29 @@ hl.config({
         follow_mouse = 1,        -- bspwm had focus_follows_pointer true
         sensitivity  = 0,
         accel_profile = "flat",  -- no mouse acceleration
+
+        -- Wheel speed. Hyprland's default is 1.0, and this block tuned POINTER
+        -- movement while leaving the wheel untouched -- which is why scrolling
+        -- felt slow while the cursor felt right. Found 2026-09-13.
+        --
+        -- Not a hardware limit: the G502 X PLUS advertises REL=1943, and bits
+        -- 11/12 of that mask are REL_WHEEL_HI_RES and REL_HWHEEL_HI_RES, so it
+        -- emits high-resolution scroll fine. The compositor was scaling it 1:1.
+        --
+        -- 6.0 is high on purpose -- chosen by feel on the 32:9, not derived.
+        -- Dial it back if it overshoots.
+        --
+        -- ⚠️ `hyprctl keyword` CANNOT set this under a Lua config -- it answers
+        -- "keyword can't work with non-legacy parsers. Use eval." Tune it live,
+        -- no reload and nothing written to disk, with:
+        --     hyprctl eval 'hl.config({ input = { scroll_factor = 6.0 } })'
+        -- `hyprctl eval` takes arbitrary Lua and is the general escape hatch for
+        -- probing this API -- far better than guessing at arg shapes.
+        --
+        -- The per-device line in `hyprctl devices` reads `scroll factor: -1.00`.
+        -- That is the "unset, inherit the global" sentinel, NOT a negative
+        -- multiplier. Do not try to "fix" it.
+        scroll_factor = 6.0,
         numlock_by_default = true,
     },
 })
