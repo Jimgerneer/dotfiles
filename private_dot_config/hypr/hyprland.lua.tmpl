@@ -399,9 +399,28 @@ hl.bind(mod .. " + CTRL + G",  centred(1920, 1080))
 -- keybind can be the escape hatch -- not this one, not any other combination.
 -- Recovery has to come from outside the input path entirely.
 --
--- The real fix lives elsewhere: `heartbeat = 5000` in
--- ~/.config/Deskflow/deskflow-server.conf, so the server detects a dead client
--- instead of holding the capture against a half-open socket forever.
+-- ❌ `heartbeat = 5000` WAS NOT THE FIX. This comment used to end by calling it
+-- one. It is in ~/.config/Deskflow/deskflow-server.conf, it is verified present,
+-- and the THIRD wedge happened anyway on 2026-09-18. It appears to have moved
+-- the failure rather than removed it: the server now notices the dead client and
+-- then wedges on the duplicate-name check instead of reaping it --
+--     WARNING: a client with name "Jims-MacBook-Air.local" is already connected
+--     INFO: disconnecting client "Jims-MacBook-Air.local"
+-- once a second, for 13 seconds, while the capture is never released.
+--
+-- ✅ SOLVED 2026-09-18 -- automatically, without a keybind and without sshd.
+-- ~/Code/linux-scripts/deskflow-watchdog/ (chezmoi carries symlinks only).
+-- A user service follows the journal for that duplicate-client loop and, on
+-- >=6 lines in 15s, calls release_input_capture OVER IPC.
+--
+-- ⚠️ The dispatcher was never broken -- only its KEYBOARD TRIGGER was. hyprctl
+-- is an IPC socket, not an input device, so an active capture cannot swallow it.
+--     hyprctl dispatch 'hl.dsp.release_input_capture()'   -> ok (verified)
+-- That is what "recovery has to come from outside the input path" actually meant.
+--
+-- Thresholds measured, not guessed: benign reconnect bursts in the journal run
+-- 1-3 lines; the wedge ran 13 consecutive seconds. Replaying the real 2026-09-18
+-- journal through the detector fires exactly once, on the real event.
 
 -- Per-workspace 3-column toggle. Unlike the centred() presets above, this
 -- TILES: the middle window owns real space with gaps, nothing floats on top.

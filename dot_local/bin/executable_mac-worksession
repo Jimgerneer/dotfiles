@@ -22,6 +22,68 @@ export SSH_AUTH_SOCK
 # a quoted command string.
 remote() { ssh -o BatchMode=yes -o ConnectTimeout=5 mac bash -s; }
 
+# Why this exists: on 2026-09-08 the Mac's DHCP lease moved from .26 to .2 and
+# every failure above printed "asleep? off the LAN?" -- which is wrong, and
+# sent the search at the Mac instead of at ~/.ssh/config. The three questions
+# below are the ones that actually separate the causes, in order.
+mac_diagnose() {
+    # `ssh -G` resolves the config exactly as ssh will, so this reports the
+    # HostName really in force rather than one assumed from reading the file.
+    local host addr
+    host=$(ssh -G mac 2>/dev/null | awk '/^hostname /{print $2}')
+    echo "  ── why it failed ──────────────────────────────" >&2
+    echo "  ssh config points 'mac' at: ${host:-<unset>}" >&2
+
+    if [ -z "$host" ]; then
+        echo "  ✗ no Host mac block in ~/.ssh/config." >&2
+        return
+    fi
+
+    # A literal IP has nothing to resolve; a name might simply not be answered.
+    if printf '%s' "$host" | grep -qE '^[0-9]+(\.[0-9]+){3}$'; then
+        addr="$host"
+        echo "  ⚠️  that is a hardcoded IP. Both machines are on DHCP, so a" >&2
+        echo "      moved lease looks exactly like a Mac that is switched off." >&2
+        echo "      Prefer the mDNS name:  HostName Jims-MacBook-Air.local" >&2
+    else
+        addr=$(getent ahostsv4 "$host" 2>/dev/null | awk 'NR==1{print $1}')
+        if [ -z "$addr" ]; then
+            echo "  ✗ '$host' does not resolve." >&2
+            case "$host" in
+              *.local)
+                echo "    .local is mDNS, served by avahi-daemon on tinos:" >&2
+                echo "      systemctl is-active avahi-daemon   (currently: $(systemctl is-active avahi-daemon 2>/dev/null))" >&2
+                echo "    A sleeping Mac also stops answering mDNS -- open the lid and retry." >&2
+                ;;
+            esac
+            return
+        fi
+        echo "  ✓ resolves to $addr" >&2
+    fi
+
+    # Port 22 open is the line between "not on the network" and "ssh refused
+    # us" -- the two get conflated by ssh's own error text.
+    #
+    # ⚠️ Deliberately NOT nc: it is not installed on tinos (checked 2026-09-08,
+    # no openbsd-netcat, no nmap), so an `nc`-based probe silently fell to the
+    # "nothing listening" branch and printed the same kind of wrong answer this
+    # function exists to stop. bash's /dev/tcp needs nothing installed. The
+    # `timeout` is required -- a filtered port makes the connect hang, not fail.
+    if timeout 3 bash -c "exec 3<>/dev/tcp/$addr/22" 2>/dev/null; then
+        echo "  ✓ $addr:22 is open -- the network is fine" >&2
+        echo "  ✗ so this is ssh itself. Full error:" >&2
+        ssh -o BatchMode=yes -o ConnectTimeout=5 mac true 2>&1 | sed 's/^/      /' >&2
+        echo "    If it mentions permission/publickey: ssh-add ~/.ssh/keys/id_ed25519_mac" >&2
+        echo "    If it mentions host key: the Mac was reinstalled, or that IP" >&2
+        echo "    now belongs to a different machine." >&2
+    else
+        echo "  ✗ nothing listening on $addr:22." >&2
+        echo "    Either the Mac is asleep/off, or Remote Login is off" >&2
+        echo "    (System Settings > General > Sharing > Remote Login)." >&2
+    fi
+    echo "  ───────────────────────────────────────────────" >&2
+}
+
 # Distinctive enough that the stop side matches only ours, never some other
 # caffeinate the Mac runs for its own reasons. -t 43200 is a 12h cap so a
 # session left open overnight stops holding the Mac awake by itself.
@@ -54,6 +116,26 @@ if [ -f "$CONF" ] && ! pgrep -qf 'Deskflow.app/Contents/MacOS/Deskflow'; then
     sed -i '' 's/^startCoreWithGui=false$/startCoreWithGui=true/' "$CONF"
     # One mechanism owns the clipboard and it is the SSH bridge, not Deskflow.
     sed -i '' 's/^clipboardSharing=true$/clipboardSharing=false/' "$CONF"
+
+    # ⚠️ remoteHost is the address the CLIENT DIALS, and it was a hardcoded
+    # 192.168.0.17 -- tinos's DHCP lease, not a fixed address. The Mac's own
+    # lease moved on 2026-09-08 and broke `ssh mac`; tinos's can move exactly
+    # the same way and would break Deskflow with no obvious symptom (the app
+    # opens, and silently retries an address nobody answers).
+    #
+    # SSH_CONNECTION is set by sshd on the Mac and its first field is the
+    # client address -- i.e. wherever tinos actually is, as measured from the
+    # far end of this very connection. Nothing to resolve, nothing to cache,
+    # and it cannot disagree with reality: the packets came from there.
+    #
+    # Safe to write here for the same reason as the two lines above -- this
+    # branch only runs with Deskflow STOPPED, the one moment QSettings will
+    # not clobber the file on quit.
+    TINOS="${SSH_CONNECTION%% *}"
+    if [ -n "$TINOS" ] && ! grep -q "^remoteHost=$TINOS:24800$" "$CONF"; then
+        sed -i '' "s|^remoteHost=.*|remoteHost=$TINOS:24800|" "$CONF"
+        echo "  mac: remoteHost repointed at $TINOS:24800"
+    fi
 fi
 
 open -a Deskflow || exit 1
@@ -63,7 +145,8 @@ REMOTE
     then
         echo "  mac: Deskflow client started, sleep inhibited (12h cap)"
     else
-        echo "  mac: could not start (asleep? off the LAN?)" >&2
+        echo "  mac: could not start -- the Mac did not answer." >&2
+        mac_diagnose
         exit 1
     fi
     ;;
