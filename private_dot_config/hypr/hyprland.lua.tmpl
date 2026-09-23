@@ -286,11 +286,21 @@ end
 -- the desk speakers with no analog attenuator in the way.
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),        { locked = true, repeating = true })
-hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),       { locked = true })
+-- Mute NOTIFIES. A silent mute toggle cost an evening on 2026-09-22: the sink
+-- was muted at 00:18:01 while ending the work session, the machine suspended
+-- nine seconds later, and it presented the next morning as "audio broken after
+-- suspend". Headphones are a SEPARATE sink, so audio-out switching still worked
+-- and hid the mute completely. Feedback is the fix, not a different key.
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("sh -c 'wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q MUTED && notify-send -u critical -t 2000 \"🔇 Output MUTED\" || notify-send -t 1500 \"🔊 Output on\"'"), { locked = true })
 hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),     { locked = true })
 hl.bind(mod .. " + equal",      hl.dsp.exec_cmd("wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"))
 hl.bind(mod .. " + minus",      hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"))
-hl.bind(mod .. " + SHIFT + M",  hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
+-- SUPER+SHIFT+M (mute) REMOVED 2026-09-22. It was a duplicate of XF86AudioMute
+-- sitting one slipped key from SUPER+M (start work session) and SUPER+CTRL+M
+-- (end work session) -- three M binds in one cluster, and this was the only
+-- silent one. Hit by accident while ending a work session; see line ~289.
+-- The comment at the SUPER+CTRL+M bind predicted a BINDING collision here and
+-- avoided it; the collision that actually landed was a FINGER one.
 hl.bind(mod .. " + A",          hl.dsp.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/audio-out toggle"))
 hl.bind(mod .. " + SHIFT + A",  hl.dsp.exec_cmd("{{ .chezmoi.homeDir }}/.local/bin/audio-out status"))
 
@@ -543,6 +553,48 @@ hl.window_rule({ name = "game-border",    match = { class = "^(steam_app_.*)$" }
 hl.window_rule({ name = "game-center",    match = { class = "^(steam_app_.*)$" }, center = true })
 
 -- Steam's own chrome should tile normally, so it is matched separately.
+-- ── Star Citizen ────────────────────────────────────────────────────────
+-- Not a Steam title, so it never matches ^(steam_app_.*)$ above. Classes
+-- measured 2026-09-18 from a live session, not guessed:
+--     starcitizen.exe    the game   XWayland, fs=2, 5120x1440
+--     rsi launcher.exe   launcher   XWayland, floating, 1440x900
+--     explorer.exe       "Wine System Tray", 160x20 stray
+--
+-- 🔴 idle_inhibit IS THE POINT OF THIS BLOCK. hypridle measures INPUT
+-- idleness, and this machine locks at 600 s, blanks at 3600 s and SUSPENDS at
+-- 5400 s. A long cruise with a stick in your hand and no keyboard input looks
+-- exactly like an idle machine -- you would be locked out mid-flight and
+-- suspended an hour later. Same trap as resolve-idle. The generic
+-- idle-fullscreen rule is NOT enough to rely on here.
+--
+-- ⚠️ Deliberately NO `center`, unlike the game-* rules above. Those exist for
+-- titles that handle 32:9 badly; SC renders 5120x1440 natively (measured), so
+-- centring it would be actively wrong.
+hl.window_rule({ name = "sc-float",     match = { class = "^(starcitizen\\.exe)$" }, float = true })
+-- ⚠️ DISABLED 2026-09-19 pending an A/B. Inventory filter menus flicker on and
+-- off. `immediate` allows tearing/immediate presentation, which is a plausible
+-- cause of visible artifacts on UI overlays -- and it was added the same session
+-- the symptom appeared, so it must be ruled out before blaming Wine/Wayland.
+-- If the flicker persists with this off, it is the cursor-mode flip (same class
+-- as the ASOP bug) and gamescope --force-grab-cursor is the next step.
+-- hl.window_rule({ name = "sc-immediate", match = { class = "^(starcitizen\\.exe)$" }, immediate = true })
+hl.window_rule({ name = "sc-border",    match = { class = "^(starcitizen\\.exe)$" }, border_size = 0 })
+hl.window_rule({ name = "sc-idle",      match = { class = "^(starcitizen\\.exe)$" }, idle_inhibit = "always" })
+-- Workspace 6 is `game` in the phase-4 layout. Not `silent`: launching it
+-- should take you there, the same as the other launch binds.
+hl.window_rule({ name = "sc-ws",        match = { class = "^(starcitizen\\.exe)$" }, workspace = "6" })
+-- 🔴 Stop Star Citizen stealing focus. misc.focus_on_activate = true (line ~105)
+-- honours activation requests, and Wine/XWayland games send them freely -- so
+-- switching to TeamSpeak's workspace and clicking it yanked you straight back
+-- to workspace 6, making TeamSpeak unusable mid-session. Found 2026-09-20.
+-- Scoped to SC rather than turning focus_on_activate off globally, which is
+-- wanted for everything else.
+hl.window_rule({ name = "sc-nosteal",   match = { class = "^(starcitizen\\.exe)$" }, suppress_event = "activatefocus" })
+
+-- The launcher floats on its own; this just keeps it out of the tiling layout
+-- deterministically rather than by accident.
+hl.window_rule({ name = "rsi-launcher-float", match = { class = "^(rsi launcher\\.exe)$" }, float = true })
+
 hl.window_rule({ name = "steam-friends",  match = { title = "^(Friends List)$" },   float = true })
 hl.window_rule({ name = "steam-settings", match = { title = "^(Steam Settings)$" }, float = true })
 
