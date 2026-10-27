@@ -69,8 +69,23 @@ font-shaping-break = no-cursor
 # reports the scroll, zellij applies its OWN step per event, and one click jumps
 # a long way. zellij exposes no scroll-step setting, so the fix belongs here.
 #   discrete:1 = one line per click.  Try 2 if this now feels too slow.
-#   precision  = trackpads / high-res wheels; left at 1, it is already smooth.
+#   precision  = trackpads only (GTK scroll-begin/end); a wheel never takes it.
+#
+# 🔴 Linux + Ghostty 1.3.x: discrete:1 is NOT one line per click here. The
+# G502's hi-res wheel arrives as ~7 fractional events per detent (counted
+# 2026-10-26 with a mouse-reporting probe: 6-7 SGR wheel reports per click).
+# 1.3.x rounds every fractional wheel event UP to a whole tick
+# (Surface.zig scrollCallback, `@max(yoff, 1)`), so each one became a line, and
+# a zellij pane scrolled ~7 x its own step: almost a full screen per click.
+# Upstream main makes that rounding macOS-only (unreleased as of 2026-10-26).
+# So 1.3.x on Linux gets ~1/7: each event is ~0.15 line and they accumulate.
+# The gate drops the workaround automatically on any non-1.3 version, where
+# 0.15 would mean 0.15 lines per click. Re-test with the probe after upgrading.
+{{ if and (eq .chezmoi.os "linux") (lookPath "ghostty") (contains "Ghostty 1.3." (output "ghostty" "--version")) -}}
+mouse-scroll-multiplier = precision:1,discrete:0.15
+{{- else -}}
 mouse-scroll-multiplier = precision:1,discrete:1
+{{- end }}
 
 adjust-cursor-thickness = 3
 adjust-underline-position = 3

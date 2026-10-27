@@ -118,28 +118,32 @@ hl.config({
         sensitivity  = 0,
         accel_profile = "flat",  -- no mouse acceleration
 
-        -- Wheel speed. Hyprland's default is 1.0, and this block tuned POINTER
-        -- movement while leaving the wheel untouched -- which is why scrolling
-        -- felt slow while the cursor felt right. Found 2026-09-13.
+        -- Wheel speed: leave this at the neutral 1.0 and tune speed per app.
         --
-        -- Not a hardware limit: the G502 X PLUS advertises REL=1943, and bits
-        -- 11/12 of that mask are REL_WHEEL_HI_RES and REL_HWHEEL_HI_RES, so it
-        -- emits high-resolution scroll fine. The compositor was scaling it 1:1.
+        -- 🔴 Was 6.0 from 2026-09-13 to 2026-10-26, set to make the terminal
+        -- feel faster. That made one wheel detent scroll nearly a full page in
+        -- Brave. Hyprland's onMouseWheel multiplies value120 and the discrete
+        -- step count by this factor, not only the smooth delta. So at 6.0 every
+        -- client sees six detents per detent, and XWayland apps/games get six
+        -- button-4/5 clicks. It is a global knob; do not use it to fix one app.
         --
-        -- 6.0 is high on purpose -- chosen by feel on the 32:9, not derived.
-        -- Dial it back if it overshoots.
+        -- The device is fine: kernel hid-logitech-hidpp delivers 8 x 15 = 120
+        -- v120 units per detent (measured 2026-08-27 with libinput debug-events).
+        --
+        -- If one app needs a different speed, use its own setting first, then
+        -- a per-window rule. A per-device `scroll_factor` exists too.
         --
         -- ⚠️ `hyprctl keyword` CANNOT set this under a Lua config -- it answers
         -- "keyword can't work with non-legacy parsers. Use eval." Tune it live,
         -- no reload and nothing written to disk, with:
-        --     hyprctl eval 'hl.config({ input = { scroll_factor = 6.0 } })'
+        --     hyprctl eval 'hl.config({ input = { scroll_factor = 1.0 } })'
         -- `hyprctl eval` takes arbitrary Lua and is the general escape hatch for
         -- probing this API -- far better than guessing at arg shapes.
         --
         -- The per-device line in `hyprctl devices` reads `scroll factor: -1.00`.
         -- That is the "unset, inherit the global" sentinel, NOT a negative
         -- multiplier. Do not try to "fix" it.
-        scroll_factor = 6.0,
+        scroll_factor = 1.0,
         numlock_by_default = true,
     },
 })
