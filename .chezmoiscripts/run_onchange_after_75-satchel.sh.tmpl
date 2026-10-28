@@ -4,8 +4,9 @@
 # .chezmoiexternal.toml.tmpl) into ~/.claude for this machine's profiles.
 #
 # run_onchange_ re-fires when the rendered content changes. The lines below
-# fold in the profiles and the current list of satchel items, so adding,
-# removing or renaming one, or changing profiles, relinks on the next apply.
+# fold in the profiles, the current list of satchel items and satchel-link
+# itself, so adding, removing or renaming an item, changing profiles, or a new
+# satchel-link (e.g. one that installs a hook) relinks on the next apply.
 # Pure content edits need no relink: the links already point at the files.
 #
 {{- $profiles := index . "satchelProfiles" | default "" }}
@@ -13,6 +14,8 @@
 # items: {{ joinPath .chezmoi.homeDir "Code/satchel/*/skills/*" | glob | join " " | sha256sum }}
 #        {{ joinPath .chezmoi.homeDir "Code/satchel/*/agents/*" | glob | join " " | sha256sum }}
 #        {{ joinPath .chezmoi.homeDir "Code/satchel/*/CLAUDE.md" | glob | join " " | sha256sum }}
+{{- $linker := joinPath .chezmoi.homeDir "Code/satchel/bin/satchel-link" }}
+# linker: {{ if stat $linker }}{{ include $linker | sha256sum }}{{ end }}
 # ─────────────────────────────────────────────────────────────────────────────
 set -eu
 

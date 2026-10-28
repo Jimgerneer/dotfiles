@@ -19,6 +19,7 @@ format = """
 $directory\
 $git_branch\
 $git_status\
+${custom.satchel}\
 $nodejs\
 $rust\
 $python\
@@ -140,3 +141,15 @@ disabled = true
 
 [ruby]
 disabled = true
+
+# Uncommitted/unpushed work in the private satchel repo (Claude skills, agents,
+# CLAUDE.md), shown from ANY directory: it is the one repo whose changes are
+# useless until pushed, because the other machine is the consumer. Prints
+# nothing when clean, which hides the module. satchel-status is local-only
+# git (no fetch), so it is cheap enough for every prompt.
+[custom.satchel]
+command = "~/Code/satchel/bin/satchel-status --prompt"
+when = "test -x ~/Code/satchel/bin/satchel-status"
+shell = ["sh"]
+style = "bold yellow"
+format = "[$output]($style) "
