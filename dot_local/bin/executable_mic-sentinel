@@ -43,6 +43,15 @@ SAMPLE_SECONDS = 2.0
 RATE = 48000
 PERIODIC_SECONDS = 30 * 60
 
+# The unit is WantedBy=default.target, so at boot the daemon can start BEFORE
+# pipewire-pulse has published the node. A check run in that window found no
+# source and logged `absent` -- indistinguishable in the log from the interface
+# actually being unplugged. Two such false failures were recorded (2026-09-02,
+# 2026-09-04) before this was fixed. See check_when_present().
+STARTUP_WAIT_SECONDS = 90
+RESUME_WAIT_SECONDS = 30
+WAIT_POLL_SECONDS = 3
+
 STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "mic-sentinel"
 LOG = STATE_DIR / "log.jsonl"
 LAST = STATE_DIR / "last-status"
@@ -166,6 +175,41 @@ def check(trigger, extra=None):
     return rec
 
 
+def check_when_present(trigger, extra=None, timeout=STARTUP_WAIT_SECONDS):
+    """Wait for the source to exist, THEN check -- so a slow graph is not
+    recorded as a dead interface.
+
+    `absent` is only meaningful if the device is really gone, so it must not be
+    reachable merely by asking early. If the source never appears within the
+    budget, `absent` IS logged and does mean something.
+
+    Non-blocking on purpose: this reschedules itself on the main loop instead of
+    sleeping, so a PrepareForSleep signal arriving mid-wait is still delivered.
+    """
+    started = time.monotonic()
+
+    def run(waited):
+        rec_extra = dict(extra or {})
+        if waited:
+            rec_extra["waited_seconds"] = waited
+        check(trigger, rec_extra)
+
+    if find_source() is not None:
+        run(0)
+        return
+
+    log(f"[{trigger}] no source yet -- waiting up to {timeout}s for it to appear")
+
+    def poll():
+        waited = round(time.monotonic() - started)
+        if find_source() is None and waited < timeout:
+            return True                      # keep waiting
+        run(waited)
+        return False                         # stop polling
+
+    GLib.timeout_add_seconds(WAIT_POLL_SECONDS, poll)
+
+
 def report():
     """`mic-sentinel --report` -- the whole point of collecting this.
 
@@ -221,7 +265,6 @@ def main():
     if "--report" in sys.argv[1:]:
         return report()
     log("mic-sentinel starting")
-    check("startup")
 
     suspended_at = {"t": None}
 
@@ -236,7 +279,8 @@ def main():
             slept = round(time.time() - suspended_at["t"])
         # The device needs a moment to re-settle before it is worth measuring.
         GLib.timeout_add_seconds(
-            8, lambda: (check("resume", {"slept_seconds": slept}), False)[1])
+            8, lambda: (check_when_present("resume", {"slept_seconds": slept},
+                                           RESUME_WAIT_SECONDS), False)[1])
 
     bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
     bus.signal_subscribe("org.freedesktop.login1",
@@ -246,6 +290,10 @@ def main():
 
     GLib.timeout_add_seconds(PERIODIC_SECONDS,
                              lambda: (check("periodic"), True)[1])
+
+    # Queued, not called inline: it may need to wait for pipewire-pulse, and the
+    # waiting is driven by the main loop.
+    check_when_present("startup")
     GLib.MainLoop().run()
 
 
