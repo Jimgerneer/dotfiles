@@ -10,12 +10,19 @@ Defaults below are the work-machine values.
 {{- /* Which palette from .chezmoidata/palettes.toml drives the desktop.
        Machine-local, so each machine can differ. Switch later with `theme`. */ -}}
 {{- $theme        := promptStringOnce . "theme"         "Desktop palette"      "gruvbox-dark-hard" -}}
+{{- /* Which satchel profiles (private Claude skills/agents/CLAUDE.md repo,
+       see .chezmoiexternal.toml.tmpl) this machine links. Space-separated
+       from: core personal work. Machine-local; change it here, then apply. */ -}}
+{{- $satchelDefault := "core work" -}}
+{{- if eq .chezmoi.hostname "tinos" }}{{ $satchelDefault = "core personal" }}{{ end -}}
+{{- $satchelProfiles := promptStringOnce . "satchelProfiles" "Satchel profiles (core personal work)" $satchelDefault -}}
 
 [data]
     fontSize = {{ $fontSize }}
     ghosttyTheme = {{ $ghosttyTheme | quote }}
     zellijTheme = {{ $zellijTheme | quote }}
     theme = {{ $theme | quote }}
+    satchelProfiles = {{ $satchelProfiles | quote }}
 
 {{/*
 Belt and braces for the git pre-commit hook.

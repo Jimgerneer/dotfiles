@@ -1,0 +1,13 @@
+# satchel: PRIVATE repo of Claude Code skills, agents and global CLAUDE.md.
+# Only the URL is visible here; cloning needs the owner's GitHub auth.
+# Linked into ~/.claude by .chezmoiscripts/run_onchange_after_75-satchel.sh.tmpl.
+#
+# --ff-only: satchel is edited in place on both machines, so a pull must never
+# invent a merge commit. If it refuses, the checkout has unpushed work; sort it
+# out in ~/Code/satchel by hand.
+["Code/satchel"]
+    type = "git-repo"
+    url = "https://github.com/Jimgerneer/satchel.git"
+    refreshPeriod = "1h"
+    [ "Code/satchel".pull ]
+        args = ["--ff-only"]
