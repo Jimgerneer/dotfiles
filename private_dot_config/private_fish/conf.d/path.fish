@@ -20,3 +20,7 @@
 # The absolute-path convention in those places is still correct -- see
 # phase-6-remote-mac.md. This changes what YOU can type, not what they can run.
 fish_add_path -g -p $HOME/.local/bin
+
+# Rust binaries from `cargo install` (belfry v1 installs belfry and belfryd here).
+# Appended (-a) so ~/.local/bin and Homebrew still win on a name clash.
+fish_add_path -g -a $HOME/.cargo/bin
