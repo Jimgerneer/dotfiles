@@ -128,3 +128,8 @@ Library
 # source, and it landed in a PUBLIC repo. git-level .gitignore is not enough:
 # chezmoi reads the source DIRECTORY, not git, so it must be ignored here too.
 .local/bin/__pycache__
+
+# Work machine only: runs a Fanfare conductor job (huginn workspace).
+{{ if not (contains "work" .satchelProfiles) }}
+.local/bin/fjob
+{{ end }}

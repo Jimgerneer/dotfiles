@@ -1,0 +1,7 @@
+#!/bin/sh
+# Run a Fanfare conductor job from its workspace: fjob 2026-11-23-daily [--dry-run]
+set -e
+job="${1:?usage: fjob <job name or file> [--dry-run]}"; shift
+cd "$HOME/Code/huginn/projects/operation-fanfare/ado"
+case "$job" in */*|*.json) ;; *) job="jobs/$job.json" ;; esac
+exec "$HOME/Code/conductor/target/release/conductor" run "$job" --json "$@"
